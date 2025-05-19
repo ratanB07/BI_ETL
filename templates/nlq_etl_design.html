@@ -1,0 +1,1110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NLQ-based ETL Design | GENFLOW</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --primary-dark: #4338ca;
+            --primary-light: #6366f1;
+            --secondary: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --info: #3b82f6;
+            --dark: #1e293b;
+            --light: #f8fafc;
+            --gray: #64748b;
+            --gray-light: #e2e8f0;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        }
+
+        body {
+            background-color: #f8fafc;
+            color: var(--dark);
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .container {
+            display: flex;
+            height: 100vh;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 300px;
+            background-color: white;
+            border-right: 1px solid var(--gray-light);
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .sidebar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .sidebar-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        .sidebar-section {
+            margin-bottom: 25px;
+        }
+
+        .section-title {
+            font-size: 14px;
+            color: var(--gray);
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+        }
+
+        .history-item {
+            padding: 10px;
+            border-radius: 6px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            background-color: var(--light);
+            border-left: 3px solid var(--primary-light);
+            transition: all 0.2s;
+        }
+
+        .history-item:hover {
+            background-color: #e0e7ff;
+        }
+
+        .history-item.active {
+            background-color: #e0e7ff;
+            border-left: 3px solid var(--primary);
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* Header */
+        .header {
+            padding: 15px 25px;
+            background-color: white;
+            border-bottom: 1px solid var(--gray-light);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-title {
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .button {
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .button-primary {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+        }
+
+        .button-primary:hover {
+            background-color: var(--primary-dark);
+        }
+
+        .button-secondary {
+            background-color: white;
+            color: var(--primary);
+            border: 1px solid var(--gray-light);
+        }
+
+        .button-secondary:hover {
+            background-color: var(--light);
+        }
+
+        /* NLQ Interface */
+        .nlq-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            gap: 20px;
+            overflow-y: auto;
+        }
+
+        .nlq-input-container {
+            background-color: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            border: 1px solid var(--gray-light);
+        }
+
+        .nlq-input-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .nlq-input-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .nlq-examples {
+            font-size: 13px;
+            color: var(--gray);
+            margin-top: 10px;
+        }
+
+        .nlq-example {
+            display: inline-block;
+            margin-right: 10px;
+            margin-bottom: 5px;
+            padding: 5px 10px;
+            background-color: var(--light);
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .nlq-example:hover {
+            background-color: #e0e7ff;
+            color: var(--primary);
+        }
+
+        .nlq-textarea {
+            width: 100%;
+            min-height: 100px;
+            padding: 15px;
+            border: 1px solid var(--gray-light);
+            border-radius: 8px;
+            font-size: 15px;
+            resize: vertical;
+            transition: all 0.2s;
+        }
+
+        .nlq-textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+
+        .nlq-submit {
+            margin-top: 15px;
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        /* Results Section */
+        .results-container {
+            background-color: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            border: 1px solid var(--gray-light);
+        }
+
+        .results-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .results-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .results-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .results-content {
+            min-height: 200px;
+        }
+
+        /* Pipeline Visualization */
+        .pipeline-container {
+            background-color: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            border: 1px solid var(--gray-light);
+        }
+
+        .pipeline-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .pipeline-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .pipeline-steps {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .pipeline-step {
+            background-color: var(--light);
+            border-radius: 8px;
+            padding: 15px;
+            position: relative;
+            border-left: 4px solid var(--primary);
+        }
+
+        .step-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .step-title {
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        .step-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .step-action {
+            width: 24px;
+            height: 24px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: var(--gray);
+            transition: all 0.2s;
+        }
+
+        .step-action:hover {
+            background-color: #e0e7ff;
+            color: var(--primary);
+        }
+
+        .step-details {
+            font-size: 14px;
+            color: var(--dark);
+            margin-bottom: 10px;
+        }
+
+        .step-code {
+            background-color: #1e293b;
+            color: #f8fafc;
+            padding: 10px;
+            border-radius: 6px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 13px;
+            overflow-x: auto;
+            margin-top: 10px;
+        }
+
+        /* Data Preview */
+        .data-preview {
+            background-color: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            border: 1px solid var(--gray-light);
+            margin-top: 20px;
+        }
+
+        .preview-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .preview-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .preview-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+
+        .preview-table th {
+            background-color: #f1f5f9;
+            padding: 10px;
+            text-align: left;
+            font-weight: 600;
+            color: var(--dark);
+            border: 1px solid var(--gray-light);
+        }
+
+        .preview-table td {
+            padding: 10px;
+            border: 1px solid var(--gray-light);
+        }
+
+        .preview-table tr:nth-child(even) {
+            background-color: #f8fafc;
+        }
+
+        /* Loading State */
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 40px;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(79, 70, 229, 0.1);
+            border-radius: 50%;
+            border-top-color: var(--primary);
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Empty State */
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+            text-align: center;
+            color: var(--gray);
+        }
+
+        .empty-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+            color: var(--gray-light);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+            }
+            
+            .sidebar {
+                width: 100%;
+                height: auto;
+                max-height: 200px;
+            }
+        }
+
+        /* Tooltip */
+        .tooltip {
+            position: absolute;
+            background-color: var(--dark);
+            color: white;
+            padding: 6px 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            pointer-events: none;
+            z-index: 100;
+            opacity: 0;
+            transition: opacity 0.2s;
+            max-width: 200px;
+        }
+
+        .tooltip::after {
+            content: '';
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            margin-left: -5px;
+            border-width: 5px;
+            border-style: solid;
+            border-color: var(--dark) transparent transparent transparent;
+        }
+
+        /* Notification */
+        .notification {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            padding: 16px;
+            max-width: 300px;
+            display: flex;
+            gap: 12px;
+            transform: translateY(20px);
+            opacity: 0;
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+
+        .notification.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .notification-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            color: white;
+            font-size: 12px;
+        }
+
+        .notification-icon-success {
+            background-color: var(--secondary);
+        }
+
+        .notification-icon-error {
+            background-color: var(--danger);
+        }
+
+        .notification-icon-info {
+            background-color: var(--info);
+        }
+
+        .notification-content {
+            flex-grow: 1;
+        }
+
+        .notification-title {
+            font-weight: 600;
+            margin-bottom: 4px;
+            color: var(--dark);
+        }
+
+        .notification-message {
+            font-size: 13px;
+            color: var(--gray);
+        }
+
+        .notification-close {
+            color: var(--gray);
+            cursor: pointer;
+            font-size: 14px;
+            align-self: flex-start;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-title">NLQ ETL Design</div>
+                <button class="button button-secondary">
+                    <i class="fas fa-cog"></i>
+                </button>
+            </div>
+
+            <div class="sidebar-section">
+                <div class="section-title">Recent Queries</div>
+                <div class="history-item active">
+                    <div>Extract customer data and filter by region</div>
+                    <div class="history-date">Just now</div>
+                </div>
+                <div class="history-item">
+                    <div>Join sales with product catalog</div>
+                    <div class="history-date">2 hours ago</div>
+                </div>
+                <div class="history-item">
+                    <div>Aggregate monthly revenue</div>
+                    <div class="history-date">Yesterday</div>
+                </div>
+                <div class="history-item">
+                    <div>Clean customer addresses</div>
+                    <div class="history-date">2 days ago</div>
+                </div>
+            </div>
+
+            <div class="sidebar-section">
+                <div class="section-title">Saved Pipelines</div>
+                <div class="history-item">
+                    <div>Customer ETL Pipeline</div>
+                </div>
+                <div class="history-item">
+                    <div>Sales Data Transformation</div>
+                </div>
+                <div class="history-item">
+                    <div>Product Catalog Load</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <div class="header">
+                <div class="header-title">
+                    <i class="fas fa-comment-dots"></i>
+                    Natural Language to ETL Pipeline
+                </div>
+                <div class="header-actions">
+                    <button class="button button-secondary">
+                        <i class="fas fa-save"></i>
+                        Save
+                    </button>
+                    <button class="button button-primary" id="runPipeline">
+                        <i class="fas fa-play"></i>
+                        Run Pipeline
+                    </button>
+                </div>
+            </div>
+
+            <div class="nlq-container">
+                <!-- NLQ Input Section -->
+                <div class="nlq-input-container">
+                    <div class="nlq-input-header">
+                        <div class="nlq-input-title">Describe Your ETL Pipeline</div>
+                        <div class="nlq-examples">
+                            Try: 
+                            <span class="nlq-example">"Extract customer data and filter by region"</span>
+                            <span class="nlq-example">"Join sales with product catalog"</span>
+                            <span class="nlq-example">"Aggregate monthly revenue by product"</span>
+                        </div>
+                    </div>
+                    <textarea class="nlq-textarea" id="nlqInput" placeholder="Describe the ETL pipeline you want to create in natural language..."></textarea>
+                    <div class="nlq-submit">
+                        <button class="button button-primary" id="generatePipeline">
+                            <i class="fas fa-magic"></i>
+                            Generate Pipeline
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Results Section -->
+                <div class="results-container">
+                    <div class="results-header">
+                        <div class="results-title">Generated Pipeline</div>
+                        <div class="results-actions">
+                            <button class="button button-secondary">
+                                <i class="fas fa-code"></i>
+                                View Full Code
+                            </button>
+                            <button class="button button-secondary">
+                                <i class="fas fa-download"></i>
+                                Export
+                            </button>
+                        </div>
+                    </div>
+                    <div class="results-content" id="pipelineResults">
+                        <!-- Pipeline visualization will be inserted here -->
+                        <div class="empty-state">
+                            <div class="empty-icon">
+                                <i class="fas fa-comment-alt"></i>
+                            </div>
+                            <h3>No Pipeline Generated Yet</h3>
+                            <p>Describe your ETL pipeline in natural language above to generate a workflow.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Data Preview Section -->
+                <div class="data-preview">
+                    <div class="preview-header">
+                        <div class="preview-title">Transformed Data Preview</div>
+                        <div class="results-actions">
+                            <button class="button button-secondary">
+                                <i class="fas fa-sync-alt"></i>
+                                Refresh
+                            </button>
+                        </div>
+                    </div>
+                    <div class="preview-content">
+                        <table class="preview-table">
+                            <thead>
+                                <tr>
+                                    <th>Column 1</th>
+                                    <th>Column 2</th>
+                                    <th>Column 3</th>
+                                    <th>Column 4</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Sample data will appear here</td>
+                                    <td>After pipeline is generated</td>
+                                    <td>And executed</td>
+                                    <td>...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification -->
+    <div class="notification" id="notification">
+        <div class="notification-icon notification-icon-info">
+            <i class="fas fa-info"></i>
+        </div>
+        <div class="notification-content">
+            <div class="notification-title" id="notificationTitle">Notification</div>
+            <div class="notification-message" id="notificationMessage">This is a notification message.</div>
+        </div>
+        <div class="notification-close" id="notificationClose">
+            <i class="fas fa-times"></i>
+        </div>
+    </div>
+
+    <!-- Tooltip -->
+    <div class="tooltip" id="tooltip"></div>
+
+    <script>
+        // Get data from parent window
+        const dataset = JSON.parse(sessionStorage.getItem('currentDataset') || '{}');
+        const columns = JSON.parse(sessionStorage.getItem('currentColumns') || '[]');
+        
+        // DOM Elements
+        const nlqInput = document.getElementById('nlqInput');
+        const generatePipelineBtn = document.getElementById('generatePipeline');
+        const runPipelineBtn = document.getElementById('runPipeline');
+        const pipelineResults = document.getElementById('pipelineResults');
+        const notification = document.getElementById('notification');
+        const notificationTitle = document.getElementById('notificationTitle');
+        const notificationMessage = document.getElementById('notificationMessage');
+        const notificationClose = document.getElementById('notificationClose');
+
+        // Show notification
+        function showNotification(title, message, type = 'info') {
+            notificationTitle.textContent = title;
+            notificationMessage.textContent = message;
+            
+            // Set icon based on type
+            const icon = notification.querySelector('.notification-icon');
+            icon.className = 'notification-icon';
+            icon.classList.add(`notification-icon-${type}`);
+            
+            if (type === 'info') {
+                icon.innerHTML = '<i class="fas fa-info"></i>';
+            } else if (type === 'success') {
+                icon.innerHTML = '<i class="fas fa-check"></i>';
+            } else if (type === 'error') {
+                icon.innerHTML = '<i class="fas fa-exclamation"></i>';
+            }
+            
+            notification.classList.add('show');
+            
+            // Auto hide after 5 seconds
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 5000);
+        }
+
+        // Close notification
+        notificationClose.addEventListener('click', () => {
+            notification.classList.remove('show');
+        });
+
+        // Show tooltip
+        function showTooltip(element, text) {
+            const tooltip = document.getElementById('tooltip');
+            tooltip.textContent = text;
+            
+            const rect = element.getBoundingClientRect();
+            tooltip.style.left = `${rect.left + rect.width / 2}px`;
+            tooltip.style.top = `${rect.top - 40}px`;
+            tooltip.style.opacity = '1';
+            
+            setTimeout(() => {
+                tooltip.style.opacity = '0';
+            }, 2000);
+        }
+
+        // Generate pipeline from NLQ
+        generatePipelineBtn.addEventListener('click', async () => {
+            const query = nlqInput.value.trim();
+            if (!query) {
+                showNotification('Error', 'Please enter a description of your ETL pipeline', 'error');
+                return;
+            }
+
+            // Show loading state
+            pipelineResults.innerHTML = `
+                <div class="loading">
+                    <div class="spinner"></div>
+                </div>
+            `;
+
+            try {
+                // Simulate API call to LLM backend
+                const response = await simulateLLMGeneration(query, dataset, columns);
+                
+                // Display the generated pipeline
+                displayPipeline(response);
+                
+                showNotification('Success', 'ETL pipeline generated successfully!', 'success');
+            } catch (error) {
+                pipelineResults.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">
+                            <i class="fas fa-exclamation-triangle"></i>
+                        </div>
+                        <h3>Error Generating Pipeline</h3>
+                        <p>${error.message || 'Failed to generate pipeline. Please try again.'}</p>
+                    </div>
+                `;
+                
+                showNotification('Error', 'Failed to generate pipeline', 'error');
+            }
+        });
+
+        // Run the generated pipeline
+        runPipelineBtn.addEventListener('click', async () => {
+            // In a real implementation, this would execute the generated pipeline
+            showNotification('Info', 'Running ETL pipeline...', 'info');
+            
+            // Simulate pipeline execution
+            setTimeout(() => {
+                showNotification('Success', 'Pipeline executed successfully!', 'success');
+                
+                // Update data preview with sample transformed data
+                updateDataPreview();
+            }, 3000);
+        });
+
+        // Simulate LLM generation (in a real app, this would call your backend)
+        async function simulateLLMGeneration(query, dataset, columns) {
+            return new Promise((resolve) => {
+                setTimeout(() => {
+                    // This is a mock response - in a real app, you'd call your LLM backend
+                    const mockResponse = {
+                        steps: generateMockPipelineSteps(query, columns),
+                        code: generateMockPipelineCode(query, columns),
+                        preview: generateMockDataPreview(columns)
+                    };
+                    resolve(mockResponse);
+                }, 2000);
+            });
+        }
+
+        // Generate mock pipeline steps based on query
+        function generateMockPipelineSteps(query, columns) {
+            const steps = [];
+            
+            // Always start with data extraction
+            steps.push({
+                type: 'extract',
+                title: 'Data Extraction',
+                description: 'Extract data from the source dataset',
+                details: `Reading data from the uploaded dataset with ${columns.length} columns.`
+            });
+            
+            // Add transformations based on keywords in query
+            if (query.toLowerCase().includes('filter')) {
+                const filterColumn = columns.find(col => query.toLowerCase().includes(col.toLowerCase())) || columns[0];
+                steps.push({
+                    type: 'transform',
+                    title: 'Data Filtering',
+                    description: `Filter rows based on ${filterColumn}`,
+                    details: `Applying filters to include only relevant rows based on ${filterColumn} column.`
+                });
+            }
+            
+            if (query.toLowerCase().includes('join') || query.toLowerCase().includes('merge')) {
+                const joinColumn = columns.length > 1 ? columns[1] : columns[0];
+                steps.push({
+                    type: 'transform',
+                    title: 'Data Joining',
+                    description: `Join with another dataset on ${joinColumn}`,
+                    details: `Performing inner join operation using ${joinColumn} as the key column.`
+                });
+            }
+            
+            if (query.toLowerCase().includes('aggregate') || query.toLowerCase().includes('summarize') || query.toLowerCase().includes('group')) {
+                const groupColumn = columns.find(col => query.toLowerCase().includes(col.toLowerCase())) || columns[0];
+                const aggColumn = columns.length > 1 ? columns[1] : columns[0];
+                steps.push({
+                    type: 'transform',
+                    title: 'Data Aggregation',
+                    description: `Aggregate data by ${groupColumn}`,
+                    details: `Calculating sum, average and count metrics grouped by ${groupColumn} column.`
+                });
+            }
+            
+            if (query.toLowerCase().includes('clean') || query.toLowerCase().includes('standardize')) {
+                steps.push({
+                    type: 'transform',
+                    title: 'Data Cleaning',
+                    description: 'Clean and standardize data values',
+                    details: 'Removing duplicates, handling missing values, and standardizing formats.'
+                });
+            }
+            
+            // Always end with data loading
+            steps.push({
+                type: 'load',
+                title: 'Data Loading',
+                description: 'Load transformed data to destination',
+                details: 'Writing the final transformed data to the specified destination.'
+            });
+            
+            return steps;
+        }
+
+        // Generate mock pipeline code
+        function generateMockPipelineCode(query, columns) {
+            let code = `# ETL Pipeline generated from NLQ: "${query}"\n\n`;
+            
+            // Extraction
+            code += `# Step 1: Data Extraction\n`;
+            code += `import pandas as pd\n`;
+            code += `df = pd.read_csv('input_data.csv')\n\n`;
+            
+            // Transformations
+            code += `# Step 2: Data Transformations\n`;
+            
+            if (query.toLowerCase().includes('filter')) {
+                const filterColumn = columns.find(col => query.toLowerCase().includes(col.toLowerCase())) || columns[0];
+                code += `# Filtering data\n`;
+                code += `df = df[df['${filterColumn}'] == 'value']  # Replace 'value' with your filter criteria\n\n`;
+            }
+            
+            if (query.toLowerCase().includes('join') || query.toLowerCase().includes('merge')) {
+                const joinColumn = columns.length > 1 ? columns[1] : columns[0];
+                code += `# Joining with another dataset\n`;
+                code += `other_df = pd.read_csv('other_data.csv')\n`;
+                code += `df = pd.merge(df, other_df, on='${joinColumn}', how='inner')\n\n`;
+            }
+            
+            if (query.toLowerCase().includes('aggregate') || query.toLowerCase().includes('summarize') || query.toLowerCase().includes('group')) {
+                const groupColumn = columns.find(col => query.toLowerCase().includes(col.toLowerCase())) || columns[0];
+                const aggColumn = columns.length > 1 ? columns[1] : columns[0];
+                code += `# Aggregating data\n`;
+                code += `agg_df = df.groupby('${groupColumn}').agg({\n`;
+                code += `    '${aggColumn}': ['sum', 'mean', 'count']\n`;
+                code += `}).reset_index()\n\n`;
+            }
+            
+            if (query.toLowerCase().includes('clean') || query.toLowerCase().includes('standardize')) {
+                code += `# Cleaning data\n`;
+                code += `df = df.drop_duplicates()\n`;
+                code += `df = df.fillna(method='ffill')\n\n`;
+            }
+            
+            // Loading
+            code += `# Step 3: Data Loading\n`;
+            code += `df.to_csv('transformed_data.csv', index=False)\n`;
+            
+            return code;
+        }
+
+        // Generate mock data preview
+        function generateMockDataPreview(columns) {
+            const preview = [];
+            const numRows = 5;
+            
+            for (let i = 0; i < numRows; i++) {
+                const row = {};
+                columns.forEach(col => {
+                    // Generate sample data based on column name
+                    if (col.toLowerCase().includes('date')) {
+                        row[col] = `2023-01-${i+1}`;
+                    } else if (col.toLowerCase().includes('amount') || col.toLowerCase().includes('price')) {
+                        row[col] = (Math.random() * 1000).toFixed(2);
+                    } else if (col.toLowerCase().includes('id')) {
+                        row[col] = `ID-${1000 + i}`;
+                    } else {
+                        row[col] = `Sample ${col} ${i+1}`;
+                    }
+                });
+                preview.push(row);
+            }
+            
+            return preview;
+        }
+
+        // Display the generated pipeline
+        function displayPipeline(response) {
+            let html = `
+                <div class="pipeline-container">
+                    <div class="pipeline-header">
+                        <div class="pipeline-title">ETL Pipeline Steps</div>
+                        <div class="results-actions">
+                            <button class="button button-secondary" id="editPipeline">
+                                <i class="fas fa-edit"></i>
+                                Edit
+                            </button>
+                        </div>
+                    </div>
+                    <div class="pipeline-steps">
+            `;
+            
+            response.steps.forEach((step, index) => {
+                html += `
+                    <div class="pipeline-step">
+                        <div class="step-header">
+                            <div class="step-title">
+                                <i class="fas ${getStepIcon(step.type)}"></i>
+                                ${step.title}
+                            </div>
+                            <div class="step-actions">
+                                <div class="step-action" title="Configure">
+                                    <i class="fas fa-cog"></i>
+                                </div>
+                                <div class="step-action" title="View Code">
+                                    <i class="fas fa-code"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="step-details">${step.description}</div>
+                        <div class="step-details" style="font-size: 13px; color: var(--gray);">${step.details}</div>
+                        
+                        ${index === response.steps.length - 1 ? '' : `
+                            <div style="text-align: center; margin-top: 10px;">
+                                <i class="fas fa-arrow-down" style="color: var(--gray-light);"></i>
+                            </div>
+                        `}
+                    </div>
+                `;
+            });
+            
+            html += `
+                    </div>
+                </div>
+                
+                <div class="pipeline-container" style="margin-top: 20px;">
+                    <div class="pipeline-header">
+                        <div class="pipeline-title">Generated Code</div>
+                        <div class="results-actions">
+                            <button class="button button-secondary" id="copyCode">
+                                <i class="fas fa-copy"></i>
+                                Copy
+                            </button>
+                        </div>
+                    </div>
+                    <div class="step-code">
+                        <pre>${response.code}</pre>
+                    </div>
+                </div>
+            `;
+            
+            pipelineResults.innerHTML = html;
+            
+            // Add event listeners to the new buttons
+            document.getElementById('copyCode')?.addEventListener('click', () => {
+                navigator.clipboard.writeText(response.code);
+                showNotification('Success', 'Code copied to clipboard!', 'success');
+            });
+            
+            document.getElementById('editPipeline')?.addEventListener('click', () => {
+                showNotification('Info', 'Edit functionality would open a pipeline editor', 'info');
+            });
+        }
+
+        // Get icon for step type
+        function getStepIcon(type) {
+            switch(type) {
+                case 'extract': return 'fa-database';
+                case 'transform': return 'fa-cogs';
+                case 'load': return 'fa-upload';
+                default: return 'fa-circle';
+            }
+        }
+
+        // Update data preview with transformed data
+        function updateDataPreview() {
+            const previewContent = document.querySelector('.preview-content');
+            if (!previewContent) return;
+            
+            // Generate mock transformed data
+            const transformedData = generateMockDataPreview(columns);
+            
+            // Create table HTML
+            let html = `<table class="preview-table"><thead><tr>`;
+            
+            // Header row
+            columns.forEach(col => {
+                html += `<th>${col}</th>`;
+            });
+            html += `</tr></thead><tbody>`;
+            
+            // Data rows
+            transformedData.forEach(row => {
+                html += `<tr>`;
+                columns.forEach(col => {
+                    html += `<td>${row[col]}</td>`;
+                });
+                html += `</tr>`;
+            });
+            
+            html += `</tbody></table>`;
+            previewContent.innerHTML = html;
+        }
+
+        // Load sample queries when clicking on examples
+        document.querySelectorAll('.nlq-example').forEach(example => {
+            example.addEventListener('click', () => {
+                nlqInput.value = example.textContent;
+            });
+        });
+
+        // Initialize with dataset info if available
+        if (columns.length > 0) {
+            nlqInput.placeholder = `Describe your ETL pipeline for dataset with columns: ${columns.join(', ')}...`;
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,1393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GENFLOW - Code-Friendly Predictive Modeling</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --primary-dark: #4338ca;
+            --primary-light: #6366f1;
+            --secondary: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --info: #3b82f6;
+            --dark: #1e293b;
+            --light: #f8fafc;
+            --gray: #64748b;
+            --gray-light: #e2e8f0;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        }
+
+        body {
+            background-color: #f8fafc;
+            color: var(--dark);
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            padding: 16px 24px;
+            border-radius: 12px 12px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-icon {
+            background-color: white;
+            border-radius: 8px;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            color: var(--primary);
+            font-size: 20px;
+        }
+
+        .logo-text {
+            font-weight: 700;
+            font-size: 22px;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 15px;
+        }
+
+        .button {
+            background: white;
+            color: var(--primary);
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            height: 36px;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .button:hover {
+            background-color: #e0e7ff;
+        }
+
+        .main-content {
+            background-color: white;
+            border-radius: 0 0 12px 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+        }
+
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid var(--gray-light);
+        }
+
+        .tab {
+            padding: 14px 24px;
+            cursor: pointer;
+            font-weight: 500;
+            color: var(--gray);
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .tab.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+
+        .tab:hover:not(.active) {
+            color: var(--dark);
+        }
+
+        .tab-content {
+            display: none;
+            padding: 24px;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .panel {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            border: 1px solid var(--gray-light);
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+
+        .panel-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--gray-light);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .panel-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .panel-body {
+            padding: 20px;
+        }
+
+        .code-editor {
+            border: 1px solid var(--gray-light);
+            border-radius: 8px;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+
+        .code-toolbar {
+            background-color: #f8fafc;
+            padding: 8px 12px;
+            border-bottom: 1px solid var(--gray-light);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .code-language {
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        .code-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .code-content {
+            font-family: 'Courier New', Courier, monospace;
+            padding: 16px;
+            background-color: #f8fafc;
+            overflow-x: auto;
+            min-height: 200px;
+            max-height: 400px;
+            white-space: pre;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background-color: white;
+            border-radius: 8px;
+            padding: 16px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            border: 1px solid var(--gray-light);
+        }
+
+        .stat-title {
+            font-size: 14px;
+            color: var(--gray);
+            margin-bottom: 8px;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .chart-container {
+            height: 300px;
+            margin-bottom: 20px;
+        }
+
+        .data-preview {
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid var(--gray-light);
+            border-radius: 8px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+
+        th {
+            background-color: #f8fafc;
+            padding: 10px 12px;
+            text-align: left;
+            border: 1px solid var(--gray-light);
+            font-weight: 600;
+            color: var(--dark);
+            position: sticky;
+            top: 0;
+        }
+
+        td {
+            padding: 8px 12px;
+            border: 1px solid var(--gray-light);
+            color: var(--dark);
+        }
+
+        tr:nth-child(even) {
+            background-color: #f8fafc;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .badge-primary {
+            background-color: #e0e7ff;
+            color: var(--primary);
+        }
+
+        .badge-success {
+            background-color: #d1fae5;
+            color: var(--secondary);
+        }
+
+        .badge-warning {
+            background-color: #fef3c7;
+            color: var(--warning);
+        }
+
+        .model-selection {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .model-option {
+            border: 1px solid var(--gray-light);
+            border-radius: 8px;
+            padding: 16px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: center;
+        }
+
+        .model-option:hover {
+            border-color: var(--primary);
+            box-shadow: 0 4px 6px rgba(79, 70, 229, 0.1);
+        }
+
+        .model-option.selected {
+            border-color: var(--primary);
+            background-color: #e0e7ff;
+        }
+
+        .model-icon {
+            font-size: 24px;
+            margin-bottom: 10px;
+            color: var(--primary);
+        }
+
+        .model-name {
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .model-desc {
+            font-size: 13px;
+            color: var(--gray);
+        }
+
+        .llm-suggestions {
+            background-color: #f8fafc;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 20px;
+            border: 1px solid var(--gray-light);
+        }
+
+        .suggestion-title {
+            font-weight: 600;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .suggestion-item {
+            padding: 10px;
+            border-bottom: 1px solid var(--gray-light);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .suggestion-item:hover {
+            background-color: #e0e7ff;
+        }
+
+        .suggestion-item:last-child {
+            border-bottom: none;
+        }
+
+        .execution-results {
+            margin-top: 20px;
+        }
+
+        .result-item {
+            padding: 12px;
+            border-radius: 6px;
+            background-color: #f8fafc;
+            margin-bottom: 10px;
+            border-left: 4px solid var(--primary);
+        }
+
+        .result-title {
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .result-content {
+            font-family: 'Courier New', Courier, monospace;
+            white-space: pre-wrap;
+            font-size: 13px;
+        }
+
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .spinner {
+            width: 24px;
+            height: 24px;
+            border: 3px solid rgba(79, 70, 229, 0.2);
+            border-radius: 50%;
+            border-top-color: var(--primary);
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .dark-mode-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        .dark {
+            filter: invert(1) hue-rotate(180deg);
+        }
+        .dark img, .dark video {
+            filter: invert(1) hue-rotate(180deg) !important;
+        }
+    </style>
+</head>
+<body>
+    <button class="dark-mode-toggle" onclick="document.documentElement.classList.toggle('dark')">🌙 Dark Mode</button>
+
+    <div class="container">
+        <div class="header">
+            <div class="logo">
+                <div class="logo-icon">G</div>
+                <div class="logo-text">GENFLOW</div>
+            </div>
+            <div class="header-actions">
+                <button class="button" id="backButton">
+                    <i class="fas fa-arrow-left"></i>
+                    Back to ETL
+                </button>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="tabs">
+                <div class="tab active" data-tab="python">Python Modeling</div>
+                <div class="tab" data-tab="r">R Modeling</div>
+                <div class="tab" data-tab="llm">LLM-Assisted</div>
+                <div class="tab" data-tab="results">Results</div>
+            </div>
+
+            <div class="tab-content active" id="python-tab">
+                <div class="panel">
+                    <div class="panel-header">
+                        <div class="panel-title">
+                            <i class="fas fa-code"></i>
+                            Python Code Editor
+                        </div>
+                        <div>
+                            <button class="button" id="runPython">
+                                <i class="fas fa-play"></i>
+                                Run Code
+                            </button>
+                            <button class="button" id="generatePython">
+                                <i class="fas fa-robot"></i>
+                                Generate with AI
+                            </button>
+                        </div>
+                    </div>
+                    <div class="panel-body">
+                        <div class="code-editor">
+                            <div class="code-toolbar">
+                                <div class="code-language">Python</div>
+                                <div class="code-actions">
+                                    <button class="button button-sm" id="savePython">
+                                        <i class="fas fa-save"></i>
+                                        Save
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="code-content" id="pythonCode">
+# Import necessary libraries
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import accuracy_score, classification_report
+
+# Load your dataset (automatically loaded from the ETL workflow)
+df = pd.read_csv('your_data.csv')
+
+# Display basic info about the dataset
+print("Dataset Info:")
+print(df.info())
+
+# Select features and target
+# MODIFY THESE BASED ON YOUR DATASET
+features = df.drop('target_column', axis=1)  # Replace 'target_column'
+target = df['target_column']  # Replace 'target_column'
+
+# Split data into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(features, target, test_size=0.2, random_state=42)
+
+# Initialize and train the model
+model = RandomForestClassifier(n_estimators=100, random_state=42)
+model.fit(X_train, y_train)
+
+# Make predictions
+predictions = model.predict(X_test)
+
+# Evaluate the model
+accuracy = accuracy_score(y_test, predictions)
+print(f"\nModel Accuracy: {accuracy:.2f}")
+print("\nClassification Report:")
+print(classification_report(y_test, predictions))
+
+# Feature importance
+feature_importance = pd.DataFrame({
+    'Feature': features.columns,
+    'Importance': model.feature_importances_
+}).sort_values('Importance', ascending=False)
+
+print("\nFeature Importance:")
+print(feature_importance)
+                            </div>
+                        </div>
+
+                        <div class="llm-suggestions">
+                            <div class="suggestion-title">
+                                <i class="fas fa-lightbulb"></i>
+                                AI Suggestions for Your Python Code
+                            </div>
+                            <div id="pythonSuggestions">
+                                <div class="suggestion-item" onclick="applySuggestion('python', 'classification')">
+                                    <strong>Classification Template:</strong> Generate a complete classification workflow
+                                </div>
+                                <div class="suggestion-item" onclick="applySuggestion('python', 'regression')">
+                                    <strong>Regression Template:</strong> Generate a complete regression workflow
+                                </div>
+                                <div class="suggestion-item" onclick="applySuggestion('python', 'feature_importance')">
+                                    <strong>Feature Importance:</strong> Add detailed feature importance analysis
+                                </div>
+                                <div class="suggestion-item" onclick="applySuggestion('python', 'hyperparameter')">
+                                    <strong>Hyperparameter Tuning:</strong> Add grid search for optimal parameters
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <div class="panel-header">
+                        <div class="panel-title">
+                            <i class="fas fa-project-diagram"></i>
+                            Model Selection
+                        </div>
+                    </div>
+                    <div class="panel-body">
+                        <div class="model-selection">
+                            <div class="model-option" data-model="random_forest">
+                                <div class="model-icon"><i class="fas fa-tree"></i></div>
+                                <div class="model-name">Random Forest</div>
+                                <div class="model-desc">Great for classification and regression tasks</div>
+                            </div>
+                            <div class="model-option" data-model="xgboost">
+                                <div class="model-icon"><i class="fas fa-chart-line"></i></div>
+                                <div class="model-name">XGBoost</div>
+                                <div class="model-desc">High-performance gradient boosting</div>
+                            </div>
+                            <div class="model-option" data-model="logistic">
+                                <div class="model-icon"><i class="fas fa-project-diagram"></i></div>
+                                <div class="model-name">Logistic Regression</div>
+                                <div class="model-desc">For binary classification tasks</div>
+                            </div>
+                            <div class="model-option" data-model="svm">
+                                <div class="model-icon"><i class="fas fa-shapes"></i></div>
+                                <div class="model-name">SVM</div>
+                                <div class="model-desc">Effective in high-dimensional spaces</div>
+                            </div>
+                            <div class="model-option" data-model="neural_net">
+                                <div class="model-icon"><i class="fas fa-network-wired"></i></div>
+                                <div class="model-name">Neural Network</div>
+                                <div class="model-desc">For complex patterns in data</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-content" id="r-tab">
+                <div class="panel">
+                    <div class="panel-header">
+                        <div class="panel-title">
+                            <i class="fas fa-code"></i>
+                            R Code Editor
+                        </div>
+                        <div>
+                            <button class="button" id="runR">
+                                <i class="fas fa-play"></i>
+                                Run Code
+                            </button>
+                            <button class="button" id="generateR">
+                                <i class="fas fa-robot"></i>
+                                Generate with AI
+                            </button>
+                        </div>
+                    </div>
+                    <div class="panel-body">
+                        <div class="code-editor">
+                            <div class="code-toolbar">
+                                <div class="code-language">R</div>
+                                <div class="code-actions">
+                                    <button class="button button-sm" id="saveR">
+                                        <i class="fas fa-save"></i>
+                                        Save
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="code-content" id="rCode">
+# Load necessary libraries
+library(caret)
+library(randomForest)
+library(xgboost)
+
+# Load your dataset (automatically loaded from the ETL workflow)
+data <- read.csv('your_data.csv')
+
+# Display basic info about the dataset
+print("Dataset Structure:")
+str(data)
+
+# Set seed for reproducibility
+set.seed(42)
+
+# Create training and testing sets
+# MODIFY THESE BASED ON YOUR DATASET
+trainIndex <- createDataPartition(data$target_column, p = 0.8, list = FALSE) # Replace 'target_column'
+trainData <- data[trainIndex, ]
+testData <- data[-trainIndex, ]
+
+# Train a Random Forest model
+model <- randomForest(
+  target_column ~ .,  # Replace 'target_column'
+  data = trainData,
+  ntree = 100,
+  importance = TRUE
+)
+
+# Make predictions
+predictions <- predict(model, testData)
+
+# Evaluate the model
+confusionMatrix(predictions, testData$target_column) # Replace 'target_column'
+
+# Feature importance
+importance <- importance(model)
+varImpPlot(model)
+                            </div>
+                        </div>
+
+                        <div class="llm-suggestions">
+                            <div class="suggestion-title">
+                                <i class="fas fa-lightbulb"></i>
+                                AI Suggestions for Your R Code
+                            </div>
+                            <div id="rSuggestions">
+                                <div class="suggestion-item" onclick="applySuggestion('r', 'classification')">
+                                    <strong>Classification Template:</strong> Generate a complete classification workflow
+                                </div>
+                                <div class="suggestion-item" onclick="applySuggestion('r', 'regression')">
+                                    <strong>Regression Template:</strong> Generate a complete regression workflow
+                                </div>
+                                <div class="suggestion-item" onclick="applySuggestion('r', 'cross_validation')">
+                                    <strong>Cross-Validation:</strong> Add k-fold cross-validation
+                                </div>
+                                <div class="suggestion-item" onclick="applySuggestion('r', 'tidyverse')">
+                                    <strong>Tidyverse Approach:</strong> Rewrite using tidyverse packages
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-content" id="llm-tab">
+                <div class="panel">
+                    <div class="panel-header">
+                        <div class="panel-title">
+                            <i class="fas fa-robot"></i>
+                            LLM-Assisted Modeling
+                        </div>
+                    </div>
+                    <div class="panel-body">
+                        <div class="stats-grid">
+                            <div class="stat-card">
+                                <div class="stat-title">Dataset Rows</div>
+                                <div class="stat-value" id="datasetRows">0</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-title">Dataset Columns</div>
+                                <div class="stat-value" id="datasetCols">0</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-title">Problem Type</div>
+                                <div class="stat-value" id="problemType">-</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-title">Target Variable</div>
+                                <div class="stat-value" id="targetVariable">-</div>
+                            </div>
+                        </div>
+
+                        <div class="panel">
+                            <div class="panel-header">
+                                <div class="panel-title">
+                                    <i class="fas fa-comment-alt"></i>
+                                    Describe Your Modeling Task
+                                </div>
+                            </div>
+                            <div class="panel-body">
+                                <textarea id="modelingPrompt" class="code-content" style="width: 100%; min-height: 100px; padding: 10px;" placeholder="Describe what you want to achieve with your model. For example: 'I want to predict customer churn based on their purchase history and demographics. The target variable is 'churn_status' which is binary.'"></textarea>
+                                <button class="button" id="generateWithLLM" style="margin-top: 10px;">
+                                    <i class="fas fa-magic"></i>
+                                    Generate Complete Solution
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="panel">
+                            <div class="panel-header">
+                                <div class="panel-title">
+                                    <i class="fas fa-chart-line"></i>
+                                    Automated Model Recommendations
+                                </div>
+                            </div>
+                            <div class="panel-body">
+                                <div id="modelRecommendations">
+                                    <div class="loading">
+                                        <div class="spinner"></div>
+                                        <span style="margin-left: 10px;">Analyzing your dataset...</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-content" id="results-tab">
+                <div class="panel">
+                    <div class="panel-header">
+                        <div class="panel-title">
+                            <i class="fas fa-chart-bar"></i>
+                            Model Performance
+                        </div>
+                    </div>
+                    <div class="panel-body">
+                        <div class="chart-container">
+                            <canvas id="performanceChart"></canvas>
+                        </div>
+
+                        <div class="panel">
+                            <div class="panel-header">
+                                <div class="panel-title">
+                                    <i class="fas fa-table"></i>
+                                    Feature Importance
+                                </div>
+                            </div>
+                            <div class="panel-body">
+                                <div class="chart-container">
+                                    <canvas id="featureImportanceChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="execution-results" id="executionResults">
+                            <div class="result-item">
+                                <div class="result-title">Execution Results Will Appear Here</div>
+                                <div class="result-content">Run your Python or R code to see the results here.</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Get dataset from sessionStorage
+        document.addEventListener('DOMContentLoaded', function() {
+            const dataset = JSON.parse(sessionStorage.getItem('codeFriendlyData') || {};
+            
+            // Update dataset stats
+            if (dataset.data && dataset.columns) {
+                document.getElementById('datasetRows').textContent = dataset.data.length;
+                document.getElementById('datasetCols').textContent = dataset.columns.length;
+                
+                // Try to detect problem type
+                detectProblemType(dataset);
+            }
+
+            // Tab switching
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.addEventListener('click', function() {
+                    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    document.querySelectorAll('.tab-content').forEach(content => {
+                        content.classList.remove('active');
+                    });
+                    
+                    const tabId = this.getAttribute('data-tab');
+                    document.getElementById(`${tabId}-tab`).classList.add('active');
+                });
+            });
+
+            // Model selection
+            document.querySelectorAll('.model-option').forEach(option => {
+                option.addEventListener('click', function() {
+                    document.querySelectorAll('.model-option').forEach(opt => {
+                        opt.classList.remove('selected');
+                    });
+                    this.classList.add('selected');
+                    
+                    // Update code based on selected model
+                    updateCodeForModel(this.getAttribute('data-model'));
+                });
+            });
+
+            // Back button
+            document.getElementById('backButton').addEventListener('click', function() {
+                window.close();
+            });
+
+            // Run Python code
+            document.getElementById('runPython').addEventListener('click', function() {
+                runCode('python');
+            });
+
+            // Run R code
+            document.getElementById('runR').addEventListener('click', function() {
+                runCode('r');
+            });
+
+            // Generate with AI buttons
+            document.getElementById('generatePython').addEventListener('click', function() {
+                generateWithAI('python');
+            });
+
+            document.getElementById('generateR').addEventListener('click', function() {
+                generateWithAI('r');
+            });
+
+            // LLM generation
+            document.getElementById('generateWithLLM').addEventListener('click', function() {
+                generateCompleteSolution();
+            });
+
+            // Initialize charts
+            initializeCharts();
+        });
+
+        function detectProblemType(dataset) {
+            // Simple heuristic to detect problem type
+            const sampleRow = dataset.data[0];
+            const targetCol = dataset.columns[dataset.columns.length - 1]; // Assume last column is target
+            
+            if (sampleRow) {
+                const targetValue = sampleRow[targetCol];
+                
+                // Check if target appears to be numeric
+                if (!isNaN(targetValue)) {
+                    document.getElementById('problemType').textContent = 'Regression';
+                } else {
+                    // Count unique values for classification
+                    const uniqueValues = [...new Set(dataset.data.map(row => row[targetCol]))];
+                    if (uniqueValues.length === 2) {
+                        document.getElementById('problemType').textContent = 'Binary Classification';
+                    } else if (uniqueValues.length > 2) {
+                        document.getElementById('problemType').textContent = 'Multi-class Classification';
+                    }
+                }
+                
+                document.getElementById('targetVariable').textContent = targetCol;
+            }
+        }
+
+        function updateCodeForModel(modelType) {
+            const pythonEditor = document.getElementById('pythonCode');
+            const rEditor = document.getElementById('rCode');
+            
+            // These would be more sophisticated in a real implementation
+            const modelTemplates = {
+                'random_forest': {
+                    python: '# Random Forest classifier\nfrom sklearn.ensemble import RandomForestClassifier\n\nmodel = RandomForestClassifier(n_estimators=100, random_state=42)',
+                    r: '# Random Forest classifier\nlibrary(randomForest)\n\nmodel <- randomForest(target_column ~ ., data=trainData, ntree=100)'
+                },
+                'xgboost': {
+                    python: '# XGBoost classifier\nfrom xgboost import XGBClassifier\n\nmodel = XGBClassifier(n_estimators=100, learning_rate=0.1, random_state=42)',
+                    r: '# XGBoost classifier\nlibrary(xgboost)\n\nmodel <- xgboost(data = as.matrix(trainData[,-target_idx]), label = trainData[,target_idx], nrounds = 100)'
+                },
+                'logistic': {
+                    python: '# Logistic Regression\nfrom sklearn.linear_model import LogisticRegression\n\nmodel = LogisticRegression(random_state=42)',
+                    r: '# Logistic Regression\nmodel <- glm(target_column ~ ., data=trainData, family=binomial)'
+                },
+                'svm': {
+                    python: '# Support Vector Machine\nfrom sklearn.svm import SVC\n\nmodel = SVC(kernel="rbf", random_state=42)',
+                    r: '# Support Vector Machine\nlibrary(e1071)\n\nmodel <- svm(target_column ~ ., data=trainData, kernel="radial")'
+                },
+                'neural_net': {
+                    python: '# Neural Network\nfrom sklearn.neural_network import MLPClassifier\n\nmodel = MLPClassifier(hidden_layer_sizes=(100,), random_state=42)',
+                    r: '# Neural Network\nlibrary(neuralnet)\n\nmodel <- neuralnet(target_column ~ ., data=trainData, hidden=5)'
+                }
+            };
+            
+            if (modelTemplates[modelType]) {
+                // In a real implementation, you would intelligently merge this with existing code
+                pythonEditor.textContent += '\n\n' + modelTemplates[modelType].python;
+                rEditor.textContent += '\n\n' + modelTemplates[modelType].r;
+            }
+        }
+
+        function applySuggestion(language, suggestionType) {
+            const editor = document.getElementById(`${language}Code`);
+            const suggestions = {
+                'python': {
+                    'classification': '\n# Classification-specific additions\nfrom sklearn.metrics import confusion_matrix\n\n# Generate confusion matrix\ncm = confusion_matrix(y_test, predictions)\nprint("Confusion Matrix:")\nprint(cm)',
+                    'regression': '\n# Regression-specific additions\nfrom sklearn.metrics import mean_squared_error, r2_score\n\n# Calculate regression metrics\nmse = mean_squared_error(y_test, predictions)\nr2 = r2_score(y_test, predictions)\nprint(f"Mean Squared Error: {mse:.2f}")\nprint(f"R-squared: {r2:.2f}")',
+                    'feature_importance': '\n# Feature importance visualization\nimport matplotlib.pyplot as plt\n\n# Plot feature importance\nplt.figure(figsize=(10, 6))\nplt.barh(features.columns, model.feature_importances_)\nplt.xlabel("Feature Importance")\nplt.title("Feature Importance Plot")\nplt.show()',
+                    'hyperparameter': '\n# Hyperparameter tuning with GridSearchCV\nfrom sklearn.model_selection import GridSearchCV\n\n# Define parameter grid\nparam_grid = {\n    "n_estimators": [50, 100, 200],\n    "max_depth": [None, 10, 20],\n    "min_samples_split": [2, 5, 10]\n}\n\n# Perform grid search\ngrid_search = GridSearchCV(estimator=model, param_grid=param_grid, cv=5)\ngrid_search.fit(X_train, y_train)\n\n# Best parameters\nprint("Best Parameters:", grid_search.best_params_)'
+                },
+                'r': {
+                    'classification': '\n# Classification-specific additions\n# Generate confusion matrix\nconfusionMatrix(predictions, testData$target_column)\n\n# ROC curve\nlibrary(pROC)\nroc_curve <- roc(testData$target_column, as.numeric(predictions))\nplot(roc_curve)',
+                    'regression': '\n# Regression-specific additions\n# Calculate regression metrics\nmse <- mean((predictions - testData$target_column)^2)\nr2 <- cor(predictions, testData$target_column)^2\ncat("Mean Squared Error:", mse, "\\n")\ncat("R-squared:", r2, "\\n")',
+                    'cross_validation': '\n# Cross-validation\nlibrary(caret)\ntrain_control <- trainControl(method="cv", number=10)\nmodel_cv <- train(target_column ~ ., data=trainData, trControl=train_control, method="rf")\nprint(model_cv)',
+                    'tidyverse': '\n# Tidyverse approach\nlibrary(tidyverse)\nlibrary(tidymodels)\n\n# Create recipe\nrecipe <- recipe(target_column ~ ., data = trainData) %>%\n  step_normalize(all_numeric()) %>%\n  step_dummy(all_nominal(), -all_outcomes())\n\n# Create model specification\nspec <- rand_forest() %>%\n  set_engine("randomForest") %>%\n  set_mode("classification")\n\n# Create workflow\nworkflow <- workflow() %>%\n  add_recipe(recipe) %>%\n  add_model(spec)\n\n# Fit model\nmodel <- workflow %>%\n  fit(data = trainData)'
+                }
+            };
+            
+            if (suggestions[language] && suggestions[language][suggestionType]) {
+                editor.textContent += suggestions[language][suggestionType];
+            }
+        }
+
+        function runCode(language) {
+            const code = document.getElementById(`${language}Code`).textContent;
+            const resultsDiv = document.getElementById('executionResults');
+            
+            // Show loading state
+            resultsDiv.innerHTML = `
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <span style="margin-left: 10px;">Executing ${language.toUpperCase()} code...</span>
+                </div>
+            `;
+            
+            // In a real implementation, this would send the code to a backend for execution
+            // For this demo, we'll simulate execution with sample results
+            setTimeout(() => {
+                const sampleResults = {
+                    'python': `Execution completed successfully!
+
+Dataset Info:
+<class 'pandas.core.frame.DataFrame'>
+RangeIndex: 1000 entries, 0 to 999
+Data columns (total 10 columns):
+ #   Column         Non-Null Count  Dtype  
+---  ------         --------------  -----  
+ 0   age            1000 non-null   int64  
+ 1   income         1000 non-null   float64
+ 2   credit_score   1000 non-null   int64  
+ 3   purchases      1000 non-null   int64  
+ 4   payment_delay  1000 non-null   int64  
+ 5   churn          1000 non-null   int64  
+dtypes: float64(1), int64(5)
+memory usage: 78.2 KB
+
+Model Accuracy: 0.87
+
+Classification Report:
+              precision    recall  f1-score   support
+
+           0       0.89      0.91      0.90       123
+           1       0.83      0.80      0.82        77
+
+    accuracy                           0.87       200
+   macro avg       0.86      0.85      0.86       200
+weighted avg       0.87      0.87      0.87       200
+
+
+Feature Importance:
+           Feature  Importance
+2     credit_score    0.321456
+1           income    0.287654
+3       purchases    0.187654
+0             age    0.123456
+4   payment_delay    0.087654
+`,
+                    'r': `Execution completed successfully!
+
+Dataset Structure:
+'data.frame':	1000 obs. of  6 variables:
+ $ age           : int  35 42 28 51 37 45 29 33 39 48 ...
+ $ income        : num  45000 60000 32000 75000 52000 68000 38000 49000 56000 72000 ...
+ $ credit_score  : int  650 720 580 780 690 710 620 680 700 750 ...
+ $ purchases     : int  12 18 8 25 15 20 10 14 17 22 ...
+ $ payment_delay : int  2 0 5 1 3 0 7 2 1 0 ...
+ $ churn         : int  0 0 0 0 0 0 1 0 0 0 ...
+
+Confusion Matrix and Statistics
+
+          Reference
+Prediction   0   1
+         0 110  15
+         1  13  62
+                                          
+               Accuracy : 0.86            
+                 95% CI : (0.8047, 0.9041)
+    No Information Rate : 0.615           
+    P-Value [Acc > NIR] : 1.17e-14        
+                                          
+                  Kappa : 0.7048          
+                                          
+ Mcnemar's Test P-Value : 0.8555          
+                                          
+            Sensitivity : 0.8943          
+            Specificity : 0.8052          
+         Pos Pred Value : 0.8800          
+         Neg Pred Value : 0.8267          
+             Prevalence : 0.6150          
+         Detection Rate : 0.5500          
+   Detection Prevalence : 0.6250          
+      Balanced Accuracy : 0.8497          
+                                          
+       'Positive' Class : 0               
+                                          
+
+Feature Importance Plot:
+[graphical output would appear here]
+`
+                };
+                
+                resultsDiv.innerHTML = `
+                    <div class="result-item">
+                        <div class="result-title">${language.toUpperCase()} Execution Results</div>
+                        <div class="result-content">${sampleResults[language]}</div>
+                    </div>
+                `;
+                
+                // Update charts with sample data
+                updateCharts();
+            }, 2000);
+        }
+
+        function generateWithAI(language) {
+            const prompt = `Generate ${language} code for predictive modeling based on the following dataset information:\n\n` +
+                          `Columns: ${document.getElementById('datasetCols').textContent}\n` +
+                          `Problem Type: ${document.getElementById('problemType').textContent}\n` +
+                          `Target Variable: ${document.getElementById('targetVariable').textContent}`;
+            
+            const editor = document.getElementById(`${language}Code`);
+            
+            // Show loading state
+            const originalContent = editor.textContent;
+            editor.textContent = `${originalContent}\n\n# Generating AI-powered code...\n`;
+            
+            // In a real implementation, this would call an LLM API
+            setTimeout(() => {
+                const aiGeneratedCode = {
+                    'python': `# AI-generated Python code for ${document.getElementById('problemType').textContent}
+
+# Advanced data preprocessing
+from sklearn.preprocessing import StandardScaler
+from sklearn.pipeline import Pipeline
+from sklearn.compose import ColumnTransformer
+from sklearn.impute import SimpleImputer
+
+# Define preprocessing for numeric columns
+numeric_features = ['age', 'income', 'credit_score', 'purchases', 'payment_delay']
+numeric_transformer = Pipeline(steps=[
+    ('imputer', SimpleImputer(strategy='median')),
+    ('scaler', StandardScaler())])
+
+# Combine preprocessing
+preprocessor = ColumnTransformer(
+    transformers=[
+        ('num', numeric_transformer, numeric_features)])
+
+# Create preprocessing and modeling pipeline
+from sklearn.ensemble import RandomForestClassifier
+pipeline = Pipeline(steps=[('preprocessor', preprocessor),
+                          ('classifier', RandomForestClassifier(n_estimators=200, 
+                                                              max_depth=10,
+                                                              random_state=42))])
+
+# Fit the model
+pipeline.fit(X_train, y_train)
+
+# Evaluate
+from sklearn.metrics import classification_report, roc_auc_score
+predictions = pipeline.predict(X_test)
+probabilities = pipeline.predict_proba(X_test)[:, 1]
+
+print("Classification Report:")
+print(classification_report(y_test, predictions))
+print("ROC AUC Score:", roc_auc_score(y_test, probabilities))
+
+# Feature importance
+importances = pipeline.named_steps['classifier'].feature_importances_
+feature_importance = pd.DataFrame({'Feature': numeric_features, 'Importance': importances})
+feature_importance = feature_importance.sort_values('Importance', ascending=False)
+print(feature_importance)
+`,
+                    'r': `# AI-generated R code for ${document.getElementById('problemType').textContent}
+
+# Advanced preprocessing and modeling pipeline
+library(tidymodels)
+library(recipes)
+
+# Create recipe for preprocessing
+recipe <- recipe(churn ~ ., data = trainData) %>%
+  step_medianimpute(all_numeric()) %>%
+  step_normalize(all_numeric()) %>%
+  step_corr(all_numeric(), threshold = 0.9)
+
+# Define model specification
+spec <- rand_forest(
+  trees = 200,
+  min_n = 5,
+  mtry = 3
+) %>%
+  set_engine("randomForest") %>%
+  set_mode("classification")
+
+# Create workflow
+workflow <- workflow() %>%
+  add_recipe(recipe) %>%
+  add_model(spec)
+
+# Fit model
+model_fit <- workflow %>%
+  fit(data = trainData)
+
+# Evaluate
+predictions <- predict(model_fit, testData)
+probabilities <- predict(model_fit, testData, type = "prob")
+
+library(yardstick)
+metrics <- metric_set(accuracy, roc_auc, sensitivity, specificity)
+
+results <- testData %>%
+  bind_cols(predictions) %>%
+  bind_cols(probabilities) %>%
+  metrics(truth = churn, estimate = .pred_class, .pred_1)
+
+print(results)
+
+# Feature importance
+importance <- model_fit %>%
+  extract_fit_parsnip() %>%
+  vip::vi()
+print(importance)
+`
+                };
+                
+                editor.textContent = `${originalContent}\n\n${aiGeneratedCode[language]}`;
+            }, 3000);
+        }
+
+        function generateCompleteSolution() {
+            const prompt = document.getElementById('modelingPrompt').value;
+            const recommendationsDiv = document.getElementById('modelRecommendations');
+            
+            if (!prompt.trim()) {
+                alert('Please describe your modeling task first');
+                return;
+            }
+            
+            // Show loading state
+            recommendationsDiv.innerHTML = `
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <span style="margin-left: 10px;">Generating recommendations based on your description...</span>
+                </div>
+            `;
+            
+            // In a real implementation, this would call an LLM API
+            setTimeout(() => {
+                const sampleResponse = `
+                    <div class="result-item">
+                        <div class="result-title">LLM Analysis of Your Task</div>
+                        <div class="result-content">
+                            Based on your description, I recommend the following approach:
+
+                            1. <strong>Problem Type:</strong> Binary classification (predicting churn)
+                            2. <strong>Key Features:</strong> 
+                               - Customer demographics (age, location)
+                               - Purchase history (frequency, amount)
+                               - Engagement metrics (login frequency, support tickets)
+                            3. <strong>Recommended Models:</strong>
+                               - XGBoost (best for tabular data with mixed features)
+                               - Random Forest (robust and interpretable)
+                               - Logistic Regression (good baseline)
+                            4. <strong>Feature Engineering:</strong>
+                               - Create tenure-based features (days since first purchase)
+                               - Normalize monetary values
+                               - Encode categorical variables
+                            5. <strong>Evaluation Metrics:</strong>
+                               - Focus on recall (minimize false negatives)
+                               - Track ROC AUC and precision-recall curve
+                        </div>
+                    </div>
+
+                    <div class="result-item">
+                        <div class="result-title">Recommended Python Implementation</div>
+                        <div class="result-content">
+# Full Python solution for customer churn prediction
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler, OneHotEncoder
+from sklearn.compose import ColumnTransformer
+from sklearn.pipeline import Pipeline
+from xgboost import XGBClassifier
+from sklearn.metrics import classification_report, roc_auc_score
+
+# Load and prepare data
+df = pd.read_csv('customer_data.csv')
+X = df.drop('churn_status', axis=1)
+y = df['churn_status']
+
+# Define preprocessing
+numeric_features = ['age', 'income', 'purchase_amount']
+categorical_features = ['location', 'membership_type']
+
+preprocessor = ColumnTransformer(
+    transformers=[
+        ('num', StandardScaler(), numeric_features),
+        ('cat', OneHotEncoder(), categorical_features)])
+
+# Create pipeline
+model = Pipeline(steps=[
+    ('preprocessor', preprocessor),
+    ('classifier', XGBClassifier(
+        n_estimators=200,
+        max_depth=6,
+        learning_rate=0.1,
+        objective='binary:logistic'))])
+
+# Train/test split
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, stratify=y, random_state=42)
+
+# Train model
+model.fit(X_train, y_train)
+
+# Evaluate
+predictions = model.predict(X_test)
+print(classification_report(y_test, predictions))
+print("ROC AUC:", roc_auc_score(y_test, model.predict_proba(X_test)[:, 1]))
+
+# Feature importance
+importances = model.named_steps['classifier'].feature_importances_
+                        </div>
+                    </div>
+
+                    <div class="result-item">
+                        <div class="result-title">Recommended R Implementation</div>
+                        <div class="result-content">
+# Full R solution for customer churn prediction
+library(tidyverse)
+library(tidymodels)
+library(xgboost)
+
+# Load and prepare data
+data <- read_csv('customer_data.csv') %>%
+  mutate(churn_status = as.factor(churn_status))
+
+# Create recipe
+recipe <- recipe(churn_status ~ ., data = data) %>%
+  step_normalize(all_numeric()) %>%
+  step_dummy(all_nominal(), -all_outcomes()) %>%
+  step_corr(all_predictors(), threshold = 0.8)
+
+# Model specification
+spec <- boost_tree(
+  trees = 200,
+  tree_depth = 6,
+  learn_rate = 0.1
+) %>%
+  set_engine("xgboost") %>%
+  set_mode("classification")
+
+# Create workflow
+workflow <- workflow() %>%
+  add_recipe(recipe) %>%
+  add_model(spec)
+
+# Split data
+set.seed(42)
+split <- initial_split(data, strata = churn_status)
+train_data <- training(split)
+test_data <- testing(split)
+
+# Train model
+model <- workflow %>%
+  fit(data = train_data)
+
+# Evaluate
+predictions <- predict(model, test_data)
+metrics <- metric_set(accuracy, recall, precision, roc_auc)
+results <- test_data %>%
+  bind_cols(predictions) %>%
+  metrics(truth = churn_status, estimate = .pred_class, .pred_1)
+
+print(results)
+                        </div>
+                    </div>
+                `;
+                
+                recommendationsDiv.innerHTML = sampleResponse;
+            }, 4000);
+        }
+
+        function initializeCharts() {
+            // Performance chart
+            const performanceCtx = document.getElementById('performanceChart').getContext('2d');
+            window.performanceChart = new Chart(performanceCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Accuracy', 'Precision', 'Recall', 'F1 Score'],
+                    datasets: [{
+                        label: 'Model Performance',
+                        data: [0, 0, 0, 0],
+                        backgroundColor: [
+                            'rgba(79, 70, 229, 0.7)',
+                            'rgba(79, 70, 229, 0.7)',
+                            'rgba(79, 70, 229, 0.7)',
+                            'rgba(79, 70, 229, 0.7)'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 1
+                        }
+                    }
+                }
+            });
+
+            // Feature importance chart
+            const featureCtx = document.getElementById('featureImportanceChart').getContext('2d');
+            window.featureImportanceChart = new Chart(featureCtx, {
+                type: 'horizontalBar',
+                data: {
+                    labels: ['Credit Score', 'Income', 'Purchase History', 'Age', 'Payment Delay'],
+                    datasets: [{
+                        label: 'Feature Importance',
+                        data: [0, 0, 0, 0, 0],
+                        backgroundColor: 'rgba(16, 185, 129, 0.7)'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    indexAxis: 'y'
+                }
+            });
+        }
+
+        function updateCharts() {
+            // Sample data - in a real implementation this would come from actual model results
+            if (window.performanceChart) {
+                window.performanceChart.data.datasets[0].data = [0.87, 0.85, 0.82, 0.83];
+                window.performanceChart.update();
+            }
+            
+            if (window.featureImportanceChart) {
+                window.featureImportanceChart.data.datasets[0].data = [0.32, 0.29, 0.19, 0.12, 0.08];
+                window.featureImportanceChart.update();
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GENFLOW - Geospatial Analytics</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --primary-dark: #4338ca;
+            --primary-light: #6366f1;
+            --secondary: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --info: #3b82f6;
+            --dark: #1e293b;
+            --light: #f8fafc;
+            --gray: #64748b;
+            --gray-light: #e2e8f0;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        }
+
+        body {
+            background-color: #f8fafc;
+            color: var(--dark);
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-icon {
+            background-color: black;
+            border-radius: 8px;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            color: var(--primary);
+            font-size: 20px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .logo-text {
+            font-weight: 700;
+            font-size: 22px;
+            letter-spacing: 0.5px;
+        }
+
+        .container {
+            display: flex;
+            height: calc(100vh - 60px);
+        }
+
+        .sidebar {
+            width: 300px;
+            background-color: white;
+            border-right: 1px solid var(--gray-light);
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .map-container {
+            flex: 1;
+            position: relative;
+        }
+
+        #map {
+            height: 100%;
+            width: 100%;
+        }
+
+        .panel {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            border: 1px solid var(--gray-light);
+            margin-bottom: 15px;
+        }
+
+        .panel-header {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--gray-light);
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .panel-body {
+            padding: 16px;
+        }
+
+        .control-panel {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            background: white;
+            padding: 10px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            width: 300px;
+        }
+
+        .analysis-results {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            z-index: 1000;
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            max-width: 400px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .button {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .button:hover {
+            opacity: 0.9;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: var(--dark);
+        }
+
+        select, input {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid var(--gray-light);
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        .legend {
+            background: white;
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0 0 15px rgba(0,0,0,0.2);
+            line-height: 1.5;
+            font-size: 13px;
+        }
+
+        .legend i {
+            width: 18px;
+            height: 18px;
+            float: left;
+            margin-right: 8px;
+            opacity: 0.7;
+        }
+
+        .cluster-marker {
+            background-color: var(--primary);
+            border-radius: 50%;
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+        }
+
+        .heatmap-legend {
+            padding: 10px;
+            background: white;
+            border-radius: 5px;
+            box-shadow: 0 0 5px rgba(0,0,0,0.2);
+        }
+
+        .loading {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255,255,255,0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1001;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(0,0,0,0.1);
+            border-radius: 50%;
+            border-top-color: var(--primary);
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .llm-response {
+            background-color: #f8fafc;
+            border-left: 4px solid var(--primary);
+            padding: 10px;
+            margin-top: 10px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="logo">
+            <div class="logo-icon">G</div>
+            <div class="logo-text">GENFLOW</div>
+        </div>
+        <div>Geospatial Analytics</div>
+        <div>
+            <button class="button" id="backButton">
+                <i class="fas fa-arrow-left"></i> Back to ETL
+            </button>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="sidebar">
+            <div class="panel">
+                <div class="panel-header">
+                    <i class="fas fa-cog"></i> Geospatial Configuration
+                </div>
+                <div class="panel-body">
+                    <div class="form-group">
+                        <label for="latitudeField">Latitude Field</label>
+                        <select id="latitudeField"></select>
+                    </div>
+                    <div class="form-group">
+                        <label for="longitudeField">Longitude Field</label>
+                        <select id="longitudeField"></select>
+                    </div>
+                    <div class="form-group">
+                        <label for="analysisType">Analysis Type</label>
+                        <select id="analysisType">
+                            <option value="heatmap">Heatmap</option>
+                            <option value="clustering">Clustering</option>
+                            <option value="hotspots">Hotspots</option>
+                            <option value="density">Density</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="colorField">Color By (Optional)</label>
+                        <select id="colorField">
+                            <option value="">None</option>
+                        </select>
+                    </div>
+                    <button class="button" id="analyzeButton">
+                        <i class="fas fa-map-marked-alt"></i> Analyze
+                    </button>
+                </div>
+            </div>
+            
+            <div class="panel">
+                <div class="panel-header">
+                    <i class="fas fa-robot"></i> LLM Insights
+                </div>
+                <div class="panel-body">
+                    <div id="llmPromptContainer">
+                        <textarea id="llmPrompt" placeholder="Ask about patterns in the data..." rows="3" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;"></textarea>
+                        <button class="button" id="askButton" style="margin-top: 10px; width: 100%;">
+                            <i class="fas fa-paper-plane"></i> Ask LLM
+                        </button>
+                    </div>
+                    <div id="llmResponse" class="llm-response" style="display: none;"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="map-container">
+                <div id="map"></div>
+                <div class="control-panel">
+                    <div class="form-group">
+                        <label for="mapStyle">Map Style</label>
+                        <select id="mapStyle">
+                            <option value="streets">Streets</option>
+                            <option value="satellite">Satellite</option>
+                            <option value="light">Light</option>
+                            <option value="dark">Dark</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="clusterRadius">Cluster Radius (px)</label>
+                        <input type="range" id="clusterRadius" min="20" max="100" value="50">
+                    </div>
+                </div>
+                <div class="analysis-results" id="analysisResults" style="display: none;">
+                    <h3 style="margin-bottom: 10px;">Analysis Results</h3>
+                    <div id="resultsContent"></div>
+                </div>
+                <div class="loading" id="loadingIndicator" style="display: none;">
+                    <div class="spinner"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js"></script>
+    <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
+    <script>
+        // Global variables
+        let map;
+        let currentLayer;
+        let currentData = null;
+        let fields = [];
+        let markers = [];
+        let heatLayer = null;
+        let markerCluster = null;
+
+        // Initialize the map when DOM is loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            // Get data from parent window
+            currentData = JSON.parse(sessionStorage.getItem('geospatialData'));
+            fields = currentData && currentData.columns ? currentData.columns : [];
+            
+            // Initialize map
+            initMap();
+            
+            // Populate field dropdowns
+            populateFieldDropdowns();
+            
+            // Set up event listeners
+            setupEventListeners();
+        });
+
+        function initMap() {
+            // Default to world view
+            map = L.map('map').setView([20, 0], 2);
+            
+            // Add base tile layer
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            }).addTo(map);
+            
+            // Set up map style change
+            document.getElementById('mapStyle').addEventListener('change', function() {
+                const style = this.value;
+                let urlTemplate, attribution;
+                
+                switch(style) {
+                    case 'satellite':
+                        urlTemplate = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
+                        attribution = 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community';
+                        break;
+                    case 'light':
+                        urlTemplate = 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png';
+                        attribution = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>';
+                        break;
+                    case 'dark':
+                        urlTemplate = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
+                        attribution = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>';
+                        break;
+                    default:
+                        urlTemplate = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+                        attribution = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
+                }
+                
+                // Remove existing base layer
+                map.eachLayer(layer => {
+                    if (layer instanceof L.TileLayer) {
+                        map.removeLayer(layer);
+                    }
+                });
+                
+                // Add new base layer
+                L.tileLayer(urlTemplate, {
+                    attribution: attribution,
+                    maxZoom: 19
+                }).addTo(map);
+            });
+        }
+
+        function populateFieldDropdowns() {
+            const latField = document.getElementById('latitudeField');
+            const lngField = document.getElementById('longitudeField');
+            const colorField = document.getElementById('colorField');
+            
+            // Clear existing options
+            latField.innerHTML = '';
+            lngField.innerHTML = '';
+            colorField.innerHTML = '<option value="">None</option>';
+            
+            // Add fields to dropdowns
+            fields.forEach(field => {
+                const option = document.createElement('option');
+                option.value = field;
+                option.textContent = field;
+                
+                latField.appendChild(option.cloneNode(true));
+                lngField.appendChild(option.cloneNode(true));
+                colorField.appendChild(option.cloneNode(true));
+            });
+            
+            // Try to auto-detect common latitude/longitude field names
+            const commonLatNames = ['latitude', 'lat', 'y', 'ylat'];
+            const commonLngNames = ['longitude', 'lng', 'lon', 'long', 'x', 'xlng'];
+            
+            commonLatNames.forEach(name => {
+                const index = fields.findIndex(f => f.toLowerCase().includes(name));
+                if (index !== -1) {
+                    latField.value = fields[index];
+                }
+            });
+            
+            commonLngNames.forEach(name => {
+                const index = fields.findIndex(f => f.toLowerCase().includes(name));
+                if (index !== -1) {
+                    lngField.value = fields[index];
+                }
+            });
+        }
+
+        function setupEventListeners() {
+            // Back button
+            document.getElementById('backButton').addEventListener('click', function() {
+                window.close();
+            });
+            
+            // Analyze button
+            document.getElementById('analyzeButton').addEventListener('click', function() {
+                performGeospatialAnalysis();
+            });
+            
+            // Ask LLM button
+            document.getElementById('askButton').addEventListener('click', function() {
+                getLLMInsights();
+            });
+        }
+
+        function performGeospatialAnalysis() {
+            const latField = document.getElementById('latitudeField').value;
+            const lngField = document.getElementById('longitudeField').value;
+            const analysisType = document.getElementById('analysisType').value;
+            const colorField = document.getElementById('colorField').value;
+            
+            if (!latField || !lngField) {
+                alert('Please select both latitude and longitude fields');
+                return;
+            }
+            
+            // Show loading indicator
+            document.getElementById('loadingIndicator').style.display = 'flex';
+            document.getElementById('analysisResults').style.display = 'none';
+            
+            // Clear existing layers
+            clearMap();
+            
+            // Process data and create visualization
+            setTimeout(() => {
+                try {
+                    const points = prepareDataPoints(latField, lngField, colorField);
+                    
+                    switch(analysisType) {
+                        case 'heatmap':
+                            createHeatmap(points);
+                            break;
+                        case 'clustering':
+                            createClusters(points);
+                            break;
+                        case 'hotspots':
+                            createHotspots(points);
+                            break;
+                        case 'density':
+                            createDensity(points);
+                            break;
+                    }
+                    
+                    // Generate analysis results
+                    generateAnalysisResults(points, analysisType);
+                    
+                    // Hide loading indicator
+                    document.getElementById('loadingIndicator').style.display = 'none';
+                    document.getElementById('analysisResults').style.display = 'block';
+                    
+                } catch (error) {
+                    console.error('Analysis error:', error);
+                    alert('Error performing analysis: ' + error.message);
+                    document.getElementById('loadingIndicator').style.display = 'none';
+                }
+            }, 500);
+        }
+
+        function prepareDataPoints(latField, lngField, colorField) {
+            const points = [];
+            
+            currentData.data.forEach(row => {
+                const lat = parseFloat(row[latField]);
+                const lng = parseFloat(row[lngField]);
+                
+                if (!isNaN(lat) && !isNaN(lng)) {
+                    const point = {
+                        lat: lat,
+                        lng: lng,
+                        properties: {}
+                    };
+                    
+                    // Add all properties for tooltips
+                    Object.keys(row).forEach(key => {
+                        point.properties[key] = row[key];
+                    });
+                    
+                    // Add color value if specified
+                    if (colorField && row[colorField] !== undefined) {
+                        point.colorValue = row[colorField];
+                    }
+                    
+                    points.push(point);
+                }
+            });
+            
+            return points;
+        }
+
+        function createHeatmap(points) {
+            // Prepare heatmap data
+            const heatData = points.map(point => [point.lat, point.lng, 1]);
+            
+            // Create heat layer
+            heatLayer = L.heatLayer(heatData, {
+                radius: 25,
+                blur: 15,
+                maxZoom: 17,
+                gradient: {0.4: 'blue', 0.6: 'cyan', 0.7: 'lime', 0.8: 'yellow', 1.0: 'red'}
+            }).addTo(map);
+            
+            currentLayer = heatLayer;
+            
+            // Fit bounds to heatmap
+            const bounds = points.reduce((bounds, point) => {
+                return bounds.extend([point.lat, point.lng]);
+            }, L.latLngBounds(points[0], points[0]));
+            
+            map.fitBounds(bounds, { padding: [50, 50] });
+        }
+
+        function createClusters(points) {
+            // Clear existing markers
+            markers = [];
+            
+            // Create marker cluster group
+            markerCluster = L.markerClusterGroup({
+                maxClusterRadius: parseInt(document.getElementById('clusterRadius').value),
+                spiderfyOnMaxZoom: true,
+                showCoverageOnHover: false
+            });
+            
+            // Add markers to cluster group
+            points.forEach(point => {
+                const marker = L.marker([point.lat, point.lng], {
+                    title: JSON.stringify(point.properties)
+                });
+                
+                // Add popup with properties
+                let popupContent = '<div style="max-height: 200px; overflow-y: auto;">';
+                Object.keys(point.properties).forEach(key => {
+                    popupContent += `<strong>${key}:</strong> ${point.properties[key]}<br>`;
+                });
+                popupContent += '</div>';
+                
+                marker.bindPopup(popupContent, { maxWidth: 300 });
+                markers.push(marker);
+            });
+            
+            markerCluster.addLayers(markers);
+            map.addLayer(markerCluster);
+            currentLayer = markerCluster;
+            
+            // Fit bounds to markers
+            const bounds = L.latLngBounds(points.map(p => [p.lat, p.lng]));
+            map.fitBounds(bounds, { padding: [50, 50] });
+        }
+
+        function createHotspots(points) {
+            // For simplicity, we'll use clustering with a different style
+            // In a real implementation, you might use statistical hotspot analysis
+            
+            // Create marker cluster group with hotspot styling
+            markerCluster = L.markerClusterGroup({
+                maxClusterRadius: parseInt(document.getElementById('clusterRadius').value),
+                iconCreateFunction: function (cluster) {
+                    const count = cluster.getChildCount();
+                    let size = 'small';
+                    let color = 'green';
+                    
+                    if (count > 50) {
+                        size = 'large';
+                        color = 'red';
+                    } else if (count > 20) {
+                        size = 'medium';
+                        color = 'orange';
+                    }
+                    
+                    return L.divIcon({
+                        html: `<div style="background-color: ${color}; width: ${size === 'large' ? '40px' : size === 'medium' ? '30px' : '20px'}; 
+                               height: ${size === 'large' ? '40px' : size === 'medium' ? '30px' : '20px'}; 
+                               border-radius: 50%; display: flex; justify-content: center; align-items: center; color: white; font-weight: bold;">
+                            ${count}
+                        </div>`,
+                        className: 'hotspot-cluster',
+                        iconSize: L.point(40, 40)
+                    });
+                }
+            });
+            
+            // Add markers
+            points.forEach(point => {
+                const marker = L.circleMarker([point.lat, point.lng], {
+                    radius: 5,
+                    fillColor: "#ff7800",
+                    color: "#000",
+                    weight: 1,
+                    opacity: 1,
+                    fillOpacity: 0.8
+                });
+                
+                let popupContent = '<div style="max-height: 200px; overflow-y: auto;">';
+                Object.keys(point.properties).forEach(key => {
+                    popupContent += `<strong>${key}:</strong> ${point.properties[key]}<br>`;
+                });
+                popupContent += '</div>';
+                
+                marker.bindPopup(popupContent, { maxWidth: 300 });
+                markers.push(marker);
+            });
+            
+            markerCluster.addLayers(markers);
+            map.addLayer(markerCluster);
+            currentLayer = markerCluster;
+            
+            // Fit bounds to markers
+            const bounds = L.latLngBounds(points.map(p => [p.lat, p.lng]));
+            map.fitBounds(bounds, { padding: [50, 50] });
+        }
+
+        function createDensity(points) {
+            // For simplicity, we'll use a heatmap with different settings
+            // In a real implementation, you might use kernel density estimation
+            
+            // Prepare heatmap data with intensity based on local density
+            const heatData = points.map(point => [point.lat, point.lng, 1]);
+            
+            // Create heat layer with density settings
+            heatLayer = L.heatLayer(heatData, {
+                radius: 35,
+                blur: 20,
+                maxZoom: 15,
+                gradient: {0.1: 'blue', 0.3: 'cyan', 0.5: 'lime', 0.7: 'yellow', 1.0: 'red'}
+            }).addTo(map);
+            
+            currentLayer = heatLayer;
+            
+            // Fit bounds to heatmap
+            const bounds = points.reduce((bounds, point) => {
+                return bounds.extend([point.lat, point.lng]);
+            }, L.latLngBounds(points[0], points[0]));
+            
+            map.fitBounds(bounds, { padding: [50, 50] });
+        }
+
+        function generateAnalysisResults(points, analysisType) {
+            const resultsContent = document.getElementById('resultsContent');
+            resultsContent.innerHTML = '';
+            
+            // Basic stats
+            const statsHTML = `
+                <div style="margin-bottom: 15px;">
+                    <h4 style="margin-bottom: 5px;">Summary Statistics</h4>
+                    <p>Total Points: ${points.length}</p>
+                    <p>Analysis Type: ${analysisType.charAt(0).toUpperCase() + analysisType.slice(1)}</p>
+                </div>
+            `;
+            
+            // Add basic stats
+            resultsContent.innerHTML += statsHTML;
+            
+            // Add LLM-generated insights (simulated)
+            const insightsHTML = `
+                <div style="margin-top: 15px; border-top: 1px solid #eee; padding-top: 15px;">
+                    <h4 style="margin-bottom: 5px;">Initial Insights</h4>
+                    <p>Based on the ${analysisType} analysis, the data shows:</p>
+                    <ul style="margin-left: 20px; margin-top: 5px;">
+                        <li>${getRandomInsight(analysisType)}</li>
+                        <li>${getRandomInsight(analysisType)}</li>
+                        <li>${getRandomInsight(analysisType)}</li>
+                    </ul>
+                </div>
+            `;
+            
+            resultsContent.innerHTML += insightsHTML;
+        }
+
+        function getRandomInsight(analysisType) {
+            const insights = {
+                heatmap: [
+                    "High concentration of points in urban areas",
+                    "Activity decreases as you move away from city centers",
+                    "Several hotspots of activity along major transportation routes"
+                ],
+                clustering: [
+                    "Three distinct clusters of high activity",
+                    "Most points are concentrated in a central region",
+                    "Outliers suggest some remote activity locations"
+                ],
+                hotspots: [
+                    "Primary hotspot contains approximately 60% of all points",
+                    "Secondary hotspots show emerging activity patterns",
+                    "Hotspot boundaries align with known geographic features"
+                ],
+                density: [
+                    "Highest density in coastal regions",
+                    "Density gradient shows urban to rural transition",
+                    "Several high-density corridors visible"
+                ]
+            };
+            
+            const typeInsights = insights[analysisType] || [
+                "Significant spatial patterns detected",
+                "Data shows non-random distribution",
+                "Several areas of concentration visible"
+            ];
+            
+            return typeInsights[Math.floor(Math.random() * typeInsights.length)];
+        }
+
+        function getLLMInsights() {
+            const prompt = document.getElementById('llmPrompt').value;
+            if (!prompt.trim()) {
+                alert('Please enter a question or prompt');
+                return;
+            }
+            
+            const llmResponse = document.getElementById('llmResponse');
+            llmResponse.style.display = 'block';
+            llmResponse.innerHTML = '<p><i class="fas fa-spinner fa-spin"></i> Analyzing with LLM...</p>';
+            
+            // Simulate LLM API call
+            setTimeout(() => {
+                const responses = [
+                    `The spatial analysis reveals that ${getRandomInsight(document.getElementById('analysisType').value).toLowerCase()}`,
+                    `Based on the geographic distribution, there appears to be ${['a strong correlation', 'a weak correlation', 'no clear correlation'][Math.floor(Math.random() * 3)]} between location and other variables.`,
+                    `The pattern suggests ${['seasonal variation', 'urban-rural divide', 'economic factors', 'demographic influences'][Math.floor(Math.random() * 4)]} may be at play.`,
+                    `When comparing with similar datasets, this distribution ${['matches expected patterns', 'shows unexpected deviations', 'is statistically significant'][Math.floor(Math.random() * 3)]}.`
+                ];
+                
+                llmResponse.innerHTML = `
+                    <p><strong>Your question:</strong> ${prompt}</p>
+                    <p><strong>LLM analysis:</strong> ${responses.join(' ')}</p>
+                    <p>Further investigation could examine ${['temporal patterns', 'demographic correlations', 'economic indicators', 'environmental factors'][Math.floor(Math.random() * 4)]}.</p>
+                `;
+            }, 2000);
+        }
+
+        function clearMap() {
+            if (currentLayer) {
+                map.removeLayer(currentLayer);
+                currentLayer = null;
+            }
+            
+            if (markerCluster) {
+                markerCluster.clearLayers();
+                markerCluster = null;
+            }
+            
+            if (heatLayer) {
+                map.removeLayer(heatLayer);
+                heatLayer = null;
+            }
+            
+            markers = [];
+        }
+
+        // Handle window resize
+        window.addEventListener('resize', function() {
+            if (map) {
+                map.invalidateSize();
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,1206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Data Enrichment | GENFLOW</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --primary-dark: #4338ca;
+            --primary-light: #6366f1;
+            --secondary: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --info: #3b82f6;
+            --dark: #1e293b;
+            --light: #f8fafc;
+            --gray: #64748b;
+            --gray-light: #e2e8f0;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        }
+
+        body {
+            background-color: #f8fafc;
+            color: var(--dark);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-icon {
+            background-color: black;
+            border-radius: 8px;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            color: var(--primary);
+            font-size: 20px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .logo-text {
+            font-weight: 700;
+            font-size: 22px;
+            letter-spacing: 0.5px;
+        }
+
+        .content-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .section-title {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .button {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s ease;
+        }
+
+        .button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(79, 70, 229, 0.3);
+        }
+
+        .panel {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            border: 1px solid var(--gray-light);
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+
+        .panel-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--gray-light);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .panel-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .panel-body {
+            padding: 20px;
+        }
+
+        .data-preview {
+            max-height: 400px;
+            overflow-y: auto;
+            margin-bottom: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+
+        th {
+            background-color: #f8fafc;
+            padding: 10px 12px;
+            text-align: left;
+            border: 1px solid var(--gray-light);
+            font-weight: 600;
+            color: var(--dark);
+            position: sticky;
+            top: 0;
+        }
+
+        td {
+            padding: 8px 12px;
+            border: 1px solid var(--gray-light);
+            color: var(--dark);
+        }
+
+        tr:nth-child(even) {
+            background-color: #f8fafc;
+        }
+
+        .enrichment-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .option-card {
+            background-color: white;
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            border: 1px solid var(--gray-light);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .option-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            border-color: var(--primary-light);
+        }
+
+        .option-card.selected {
+            border-color: var(--primary);
+            background-color: #f0f4ff;
+        }
+
+        .option-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            color: white;
+            margin-bottom: 10px;
+        }
+
+        .option-title {
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: var(--dark);
+        }
+
+        .option-description {
+            font-size: 14px;
+            color: var(--gray);
+        }
+
+        .progress-container {
+            margin-top: 20px;
+        }
+
+        .progress-bar {
+            height: 8px;
+            background-color: #e2e8f0;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .progress-text {
+            font-size: 14px;
+            color: var(--gray);
+            text-align: center;
+        }
+
+        .results-container {
+            margin-top: 30px;
+        }
+
+        .result-card {
+            background-color: white;
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            border: 1px solid var(--gray-light);
+            margin-bottom: 15px;
+        }
+
+        .result-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .result-title {
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        .result-value {
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .chart-container {
+            margin-top: 20px;
+            height: 300px;
+        }
+
+        .status-badge {
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .status-processing {
+            background-color: #fffbeb;
+            color: var(--warning);
+        }
+
+        .status-completed {
+            background-color: #ecfdf5;
+            color: var(--secondary);
+        }
+
+        .status-error {
+            background-color: #fef2f2;
+            color: var(--danger);
+        }
+
+        .api-selector {
+            margin-bottom: 20px;
+        }
+
+        select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid var(--gray-light);
+            border-radius: 6px;
+            font-size: 14px;
+            transition: all 0.2s ease;
+        }
+
+        select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.2);
+        }
+
+        .llm-prompt {
+            margin-top: 20px;
+        }
+
+        textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--gray-light);
+            border-radius: 6px;
+            min-height: 100px;
+            font-size: 14px;
+            transition: all 0.2s ease;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.2);
+        }
+
+        .execute-btn {
+            margin-top: 15px;
+            width: 100%;
+        }
+
+        .notification {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            padding: 16px;
+            max-width: 350px;
+            display: flex;
+            gap: 12px;
+            transform: translateY(20px);
+            opacity: 0;
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+
+        .notification.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .notification-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            color: white;
+            font-size: 12px;
+        }
+
+        .notification-icon-success {
+            background-color: var(--secondary);
+        }
+
+        .notification-icon-error {
+            background-color: var(--danger);
+        }
+
+        .notification-icon-warning {
+            background-color: var(--warning);
+        }
+
+        .notification-icon-info {
+            background-color: var(--info);
+        }
+
+        .notification-content {
+            flex-grow: 1;
+        }
+
+        .notification-title {
+            font-weight: 600;
+            margin-bottom: 4px;
+            color: var(--dark);
+        }
+
+        .notification-message {
+            font-size: 13px;
+            color: var(--gray);
+        }
+
+        .notification-close {
+            color: var(--gray);
+            cursor: pointer;
+            font-size: 14px;
+            align-self: flex-start;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .spin {
+            animation: spin 1s linear infinite;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="logo">
+            <div class="logo-icon">G</div>
+            <div class="logo-text">GENFLOW</div>
+        </div>
+        <div style="font-size: 16px; font-weight: 500;">AI-based Data Enrichment with Third-party APIs</div>
+    </div>
+
+    <div class="container">
+        <div class="content-header">
+            <h1 class="section-title">AI Data Enrichment</h1>
+            <button class="button" id="backButton">
+                <i class="fas fa-arrow-left"></i>
+                Back to ETL
+            </button>
+        </div>
+
+        <div class="panel">
+            <div class="panel-header">
+                <div class="panel-title">
+                    <i class="fas fa-table"></i>
+                    Dataset Preview
+                </div>
+                <div id="datasetInfo"></div>
+            </div>
+            <div class="panel-body">
+                <div class="data-preview">
+                    <table id="dataTable">
+                        <thead>
+                            <tr id="tableHeader"></tr>
+                        </thead>
+                        <tbody id="tableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="panel">
+            <div class="panel-header">
+                <div class="panel-title">
+                    <i class="fas fa-robot"></i>
+                    AI Enrichment Options
+                </div>
+            </div>
+            <div class="panel-body">
+                <div class="api-selector">
+                    <label for="apiProvider">Select API Provider:</label>
+                    <select id="apiProvider">
+                        <option value="openai">OpenAI GPT-4</option>
+                        <option value="anthropic">Anthropic Claude</option>
+                        <option value="google">Google Gemini</option>
+                        <option value="ibm">IBM Watson</option>
+                        <option value="azure">Microsoft Azure AI</option>
+                    </select>
+                </div>
+
+                <div class="enrichment-options">
+                    <div class="option-card" data-enrichment="sentiment">
+                        <div class="option-icon" style="background-color: #3b82f6;">
+                            <i class="fas fa-smile"></i>
+                        </div>
+                        <h3 class="option-title">Sentiment Analysis</h3>
+                        <p class="option-description">Analyze text columns for positive, negative or neutral sentiment using advanced NLP models.</p>
+                    </div>
+
+                    <div class="option-card" data-enrichment="entities">
+                        <div class="option-icon" style="background-color: #10b981;">
+                            <i class="fas fa-tags"></i>
+                        </div>
+                        <h3 class="option-title">Entity Extraction</h3>
+                        <p class="option-description">Identify and extract named entities (people, places, organizations) from text data.</p>
+                    </div>
+
+                    <div class="option-card" data-enrichment="classification">
+                        <div class="option-icon" style="background-color: #8b5cf6;">
+                            <i class="fas fa-project-diagram"></i>
+                        </div>
+                        <h3 class="option-title">Text Classification</h3>
+                        <p class="option-description">Categorize text into custom categories using zero-shot classification.</p>
+                    </div>
+
+                    <div class="option-card" data-enrichment="summarization">
+                        <div class="option-icon" style="background-color: #ec4899;">
+                            <i class="fas fa-comment-alt"></i>
+                        </div>
+                        <h3 class="option-title">Text Summarization</h3>
+                        <p class="option-description">Generate concise summaries of long text content while preserving key information.</p>
+                    </div>
+
+                    <div class="option-card" data-enrichment="translation">
+                        <div class="option-icon" style="background-color: #f59e0b;">
+                            <i class="fas fa-language"></i>
+                        </div>
+                        <h3 class="option-title">Language Translation</h3>
+                        <p class="option-description">Translate text between multiple languages with high accuracy.</p>
+                    </div>
+
+                    <div class="option-card" data-enrichment="custom">
+                        <div class="option-icon" style="background-color: #ef4444;">
+                            <i class="fas fa-code"></i>
+                        </div>
+                        <h3 class="option-title">Custom LLM Prompt</h3>
+                        <p class="option-description">Create your own custom enrichment using natural language instructions.</p>
+                    </div>
+                </div>
+
+                <div class="llm-prompt" id="customPromptSection" style="display: none;">
+                    <label for="promptText">Custom Prompt:</label>
+                    <textarea id="promptText" placeholder="Example: Extract the main product name from each description and categorize it as either electronics, clothing, or home goods."></textarea>
+                    <label for="targetColumn" style="margin-top: 10px;">Target Column:</label>
+                    <select id="targetColumn"></select>
+                    <button class="button execute-btn" id="executeCustom">
+                        <i class="fas fa-play"></i>
+                        Execute Custom Enrichment
+                    </button>
+                </div>
+
+                <div id="selectedOptionSection" style="display: none;">
+                    <div style="margin-bottom: 15px;">
+                        <h3 id="selectedOptionTitle" style="font-size: 18px; color: var(--primary);"></h3>
+                        <p id="selectedOptionDesc" style="font-size: 14px; color: var(--gray);"></p>
+                    </div>
+
+                    <div id="optionConfigSection"></div>
+
+                    <button class="button" id="executeEnrichment">
+                        <i class="fas fa-magic"></i>
+                        Apply AI Enrichment
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="progress-container" id="progressSection" style="display: none;">
+            <div class="panel-header">
+                <div class="panel-title">
+                    <i class="fas fa-spinner spin"></i>
+                    Processing Enrichment
+                </div>
+                <div class="status-badge status-processing">In Progress</div>
+            </div>
+            <div class="panel-body">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+                <div class="progress-text" id="progressText">Initializing AI enrichment...</div>
+            </div>
+        </div>
+
+        <div class="results-container" id="resultsSection" style="display: none;">
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-title">
+                        <i class="fas fa-chart-bar"></i>
+                        Enrichment Results
+                    </div>
+                    <div class="status-badge status-completed">Completed</div>
+                </div>
+                <div class="panel-body">
+                    <div class="result-card">
+                        <div class="result-header">
+                            <span class="result-title">Enrichment Type</span>
+                            <span class="result-value" id="resultType">Sentiment Analysis</span>
+                        </div>
+                    </div>
+
+                    <div class="result-card">
+                        <div class="result-header">
+                            <span class="result-title">API Provider</span>
+                            <span class="result-value" id="resultProvider">OpenAI GPT-4</span>
+                        </div>
+                    </div>
+
+                    <div class="result-card">
+                        <div class="result-header">
+                            <span class="result-title">Processing Time</span>
+                            <span class="result-value" id="resultTime">2.4 seconds</span>
+                        </div>
+                    </div>
+
+                    <div class="result-card">
+                        <div class="result-header">
+                            <span class="result-title">Rows Enriched</span>
+                            <span class="result-value" id="resultRows">1,245 records</span>
+                        </div>
+                    </div>
+
+                    <div class="chart-container">
+                        <canvas id="resultsChart"></canvas>
+                    </div>
+
+                    <button class="button" id="saveResults" style="margin-top: 20px;">
+                        <i class="fas fa-save"></i>
+                        Save Enriched Dataset
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="notification" id="notification">
+        <div class="notification-icon notification-icon-info">
+            <i class="fas fa-info"></i>
+        </div>
+        <div class="notification-content">
+            <div class="notification-title" id="notificationTitle">Notification</div>
+            <div class="notification-message" id="notificationMessage">This is a notification message.</div>
+        </div>
+        <div class="notification-close" id="closeNotification">
+            <i class="fas fa-times"></i>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let dataset = null;
+        let columns = [];
+        let selectedEnrichment = null;
+        let resultsChart = null;
+        let currentApiProvider = 'openai';
+
+        // Initialize the page
+        document.addEventListener('DOMContentLoaded', function() {
+            // Load the dataset from session storage
+            loadDataset();
+            
+            // Setup event listeners
+            setupEventListeners();
+        });
+
+        function loadDataset() {
+            const data = JSON.parse(sessionStorage.getItem('enrichmentDataset') || '{}');
+            if (data.rows && data.columns) {
+                dataset = data.rows;
+                columns = data.columns;
+                displayDataset();
+                populateTargetColumns();
+                updateDatasetInfo();
+            } else {
+                showNotification('Error', 'No dataset available for enrichment', 'error');
+                setTimeout(() => {
+                    window.close();
+                }, 2000);
+            }
+        }
+
+        function displayDataset() {
+            const tableHeader = document.getElementById('tableHeader');
+            const tableBody = document.getElementById('tableBody');
+            
+            // Clear existing content
+            tableHeader.innerHTML = '';
+            tableBody.innerHTML = '';
+            
+            // Add header row
+            columns.forEach(col => {
+                const th = document.createElement('th');
+                th.textContent = col;
+                tableHeader.appendChild(th);
+            });
+            
+            // Add data rows (limit to 50 for preview)
+            const displayRows = dataset.slice(0, 50);
+            displayRows.forEach(row => {
+                const tr = document.createElement('tr');
+                columns.forEach(col => {
+                    const td = document.createElement('td');
+                    td.textContent = row[col] !== undefined ? String(row[col]) : '';
+                    tr.appendChild(td);
+                });
+                tableBody.appendChild(tr);
+            });
+        }
+
+        function populateTargetColumns() {
+            const targetColumnSelect = document.getElementById('targetColumn');
+            targetColumnSelect.innerHTML = '';
+            
+            // Add text columns as options
+            columns.forEach(col => {
+                // Simple check for text columns (in a real app, we'd check data types)
+                const sampleValue = dataset[0][col];
+                if (sampleValue && typeof sampleValue === 'string' && sampleValue.length > 10) {
+                    const option = document.createElement('option');
+                    option.value = col;
+                    option.textContent = col;
+                    targetColumnSelect.appendChild(option);
+                }
+            });
+            
+            if (targetColumnSelect.options.length > 0) {
+                targetColumnSelect.value = targetColumnSelect.options[0].value;
+            }
+        }
+
+        function updateDatasetInfo() {
+            const datasetInfo = document.getElementById('datasetInfo');
+            datasetInfo.innerHTML = `
+                <span style="font-size: 14px; color: var(--gray);">
+                    ${dataset.length} rows × ${columns.length} columns
+                </span>
+            `;
+        }
+
+        function setupEventListeners() {
+            // Back button
+            document.getElementById('backButton').addEventListener('click', function() {
+                window.close();
+            });
+            
+            // API provider selection
+            document.getElementById('apiProvider').addEventListener('change', function(e) {
+                currentApiProvider = e.target.value;
+            });
+            
+            // Enrichment option selection
+            document.querySelectorAll('.option-card').forEach(card => {
+                card.addEventListener('click', function() {
+                    // Remove selected class from all cards
+                    document.querySelectorAll('.option-card').forEach(c => {
+                        c.classList.remove('selected');
+                    });
+                    
+                    // Add selected class to clicked card
+                    this.classList.add('selected');
+                    
+                    // Get the enrichment type
+                    selectedEnrichment = this.getAttribute('data-enrichment');
+                    
+                    // Show the appropriate configuration section
+                    showConfigurationSection(selectedEnrichment);
+                });
+            });
+            
+            // Execute enrichment button
+            document.getElementById('executeEnrichment').addEventListener('click', executeEnrichment);
+            
+            // Execute custom enrichment button
+            document.getElementById('executeCustom').addEventListener('click', executeCustomEnrichment);
+            
+            // Save results button
+            document.getElementById('saveResults').addEventListener('click', saveResults);
+            
+            // Close notification button
+            document.getElementById('closeNotification').addEventListener('click', function() {
+                document.getElementById('notification').classList.remove('show');
+            });
+        }
+
+        function showConfigurationSection(enrichmentType) {
+            const selectedOptionSection = document.getElementById('selectedOptionSection');
+            const customPromptSection = document.getElementById('customPromptSection');
+            const optionConfigSection = document.getElementById('optionConfigSection');
+            
+            // Update titles
+            const card = document.querySelector(`.option-card[data-enrichment="${enrichmentType}"]`);
+            document.getElementById('selectedOptionTitle').textContent = card.querySelector('.option-title').textContent;
+            document.getElementById('selectedOptionDesc').textContent = card.querySelector('.option-description').textContent;
+            
+            // Show different config based on enrichment type
+            if (enrichmentType === 'custom') {
+                selectedOptionSection.style.display = 'none';
+                customPromptSection.style.display = 'block';
+            } else {
+                customPromptSection.style.display = 'none';
+                selectedOptionSection.style.display = 'block';
+                
+                // Generate configuration options based on enrichment type
+                let configHTML = '';
+                
+                switch(enrichmentType) {
+                    case 'sentiment':
+                        configHTML = `
+                            <div style="margin-bottom: 15px;">
+                                <label for="sentimentColumn">Select Text Column:</label>
+                                <select id="sentimentColumn">
+                                    ${generateTextColumnOptions()}
+                                </select>
+                            </div>
+                            <div>
+                                <label for="sentimentGranularity">Granularity:</label>
+                                <select id="sentimentGranularity">
+                                    <option value="simple">Simple (Positive/Negative/Neutral)</option>
+                                    <option value="detailed">Detailed (0-10 scale)</option>
+                                    <option value="emotions">Emotion Detection</option>
+                                </select>
+                            </div>
+                        `;
+                        break;
+                        
+                    case 'entities':
+                        configHTML = `
+                            <div style="margin-bottom: 15px;">
+                                <label for="entityColumn">Select Text Column:</label>
+                                <select id="entityColumn">
+                                    ${generateTextColumnOptions()}
+                                </select>
+                            </div>
+                            <div>
+                                <label for="entityTypes">Entity Types to Extract:</label>
+                                <select id="entityTypes" multiple style="height: auto;">
+                                    <option value="person" selected>People</option>
+                                    <option value="organization" selected>Organizations</option>
+                                    <option value="location" selected>Locations</option>
+                                    <option value="product">Products</option>
+                                    <option value="date">Dates</option>
+                                    <option value="money">Monetary Values</option>
+                                </select>
+                            </div>
+                        `;
+                        break;
+                        
+                    case 'classification':
+                        configHTML = `
+                            <div style="margin-bottom: 15px;">
+                                <label for="classifyColumn">Select Text Column:</label>
+                                <select id="classifyColumn">
+                                    ${generateTextColumnOptions()}
+                                </select>
+                            </div>
+                            <div>
+                                <label for="categories">Categories (comma separated):</label>
+                                <input type="text" id="categories" placeholder="e.g., sports, politics, technology, entertainment" style="width: 100%; padding: 8px 12px; border: 1px solid var(--gray-light); border-radius: 6px;">
+                            </div>
+                        `;
+                        break;
+                        
+                    case 'summarization':
+                        configHTML = `
+                            <div style="margin-bottom: 15px;">
+                                <label for="summarizeColumn">Select Text Column:</label>
+                                <select id="summarizeColumn">
+                                    ${generateTextColumnOptions()}
+                                </select>
+                            </div>
+                            <div>
+                                <label for="summaryLength">Summary Length:</label>
+                                <select id="summaryLength">
+                                    <option value="short">Short (1-2 sentences)</option>
+                                    <option value="medium" selected>Medium (3-5 sentences)</option>
+                                    <option value="long">Long (paragraph)</option>
+                                </select>
+                            </div>
+                        `;
+                        break;
+                        
+                    case 'translation':
+                        configHTML = `
+                            <div style="margin-bottom: 15px;">
+                                <label for="translateColumn">Select Text Column:</label>
+                                <select id="translateColumn">
+                                    ${generateTextColumnOptions()}
+                                </select>
+                            </div>
+                            <div>
+                                <label for="targetLanguage">Target Language:</label>
+                                <select id="targetLanguage">
+                                    <option value="es">Spanish</option>
+                                    <option value="fr">French</option>
+                                    <option value="de">German</option>
+                                    <option value="it">Italian</option>
+                                    <option value="pt">Portuguese</option>
+                                    <option value="zh">Chinese</option>
+                                    <option value="ja">Japanese</option>
+                                    <option value="hi">Hindi</option>
+                                    <option value="ar">Arabic</option>
+                                </select>
+                            </div>
+                        `;
+                        break;
+                }
+                
+                optionConfigSection.innerHTML = configHTML;
+            }
+        }
+
+        function generateTextColumnOptions() {
+            let options = '';
+            columns.forEach(col => {
+                // Simple check for text columns
+                const sampleValue = dataset[0][col];
+                if (sampleValue && typeof sampleValue === 'string' && sampleValue.length > 10) {
+                    options += `<option value="${col}">${col}</option>`;
+                }
+            });
+            return options;
+        }
+
+        function executeEnrichment() {
+            if (!selectedEnrichment) {
+                showNotification('Error', 'Please select an enrichment option first', 'error');
+                return;
+            }
+            
+            // Show progress section
+            document.getElementById('progressSection').style.display = 'block';
+            document.getElementById('selectedOptionSection').style.display = 'none';
+            
+            // Simulate progress (in a real app, this would be API calls)
+            let progress = 0;
+            const progressInterval = setInterval(() => {
+                progress += Math.random() * 10;
+                if (progress > 100) progress = 100;
+                
+                document.getElementById('progressFill').style.width = `${progress}%`;
+                document.getElementById('progressText').textContent = getProgressMessage(progress);
+                
+                if (progress === 100) {
+                    clearInterval(progressInterval);
+                    setTimeout(showResults, 1000);
+                }
+            }, 300);
+        }
+
+        function executeCustomEnrichment() {
+            const promptText = document.getElementById('promptText').value;
+            const targetColumn = document.getElementById('targetColumn').value;
+            
+            if (!promptText || !targetColumn) {
+                showNotification('Error', 'Please provide both a prompt and target column', 'error');
+                return;
+            }
+            
+            // Show progress section
+            document.getElementById('progressSection').style.display = 'block';
+            document.getElementById('customPromptSection').style.display = 'none';
+            
+            // Simulate progress (in a real app, this would be API calls)
+            let progress = 0;
+            const progressInterval = setInterval(() => {
+                progress += Math.random() * 10;
+                if (progress > 100) progress = 100;
+                
+                document.getElementById('progressFill').style.width = `${progress}%`;
+                document.getElementById('progressText').textContent = getProgressMessage(progress);
+                
+                if (progress === 100) {
+                    clearInterval(progressInterval);
+                    setTimeout(() => {
+                        // For demo purposes, we'll simulate a custom enrichment result
+                        selectedEnrichment = 'custom';
+                        showResults();
+                    }, 1000);
+                }
+            }, 300);
+        }
+
+        function getProgressMessage(progress) {
+            const messages = [
+                "Initializing AI model...",
+                "Analyzing dataset structure...",
+                "Processing first batch of records...",
+                "Optimizing API calls...",
+                "Applying enrichment to remaining records...",
+                "Finalizing results...",
+                "Enrichment complete!"
+            ];
+            
+            const index = Math.min(Math.floor(progress / (100 / messages.length)), messages.length - 1);
+            return messages[index];
+        }
+
+        function showResults() {
+            document.getElementById('progressSection').style.display = 'none';
+            document.getElementById('resultsSection').style.display = 'block';
+            
+            // Set result details
+            document.getElementById('resultType').textContent = 
+                document.getElementById('selectedOptionTitle').textContent || 'Custom Enrichment';
+            document.getElementById('resultProvider').textContent = 
+                document.getElementById('apiProvider').options[document.getElementById('apiProvider').selectedIndex].text;
+            document.getElementById('resultTime').textContent = 
+                `${(Math.random() * 5 + 1).toFixed(1)} seconds`;
+            document.getElementById('resultRows').textContent = 
+                `${dataset.length.toLocaleString()} records`;
+            
+            // Create a sample chart (in a real app, this would show actual results)
+            createSampleChart();
+            
+            // Scroll to results
+            document.getElementById('resultsSection').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function createSampleChart() {
+            const ctx = document.getElementById('resultsChart').getContext('2d');
+            
+            if (resultsChart) {
+                resultsChart.destroy();
+            }
+            
+            // Create different charts based on enrichment type
+            let chartConfig = {};
+            
+            switch(selectedEnrichment) {
+                case 'sentiment':
+                    chartConfig = {
+                        type: 'pie',
+                        data: {
+                            labels: ['Positive', 'Negative', 'Neutral'],
+                            datasets: [{
+                                data: [45, 15, 40],
+                                backgroundColor: [
+                                    '#10b981',
+                                    '#ef4444',
+                                    '#64748b'
+                                ]
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                title: {
+                                    display: true,
+                                    text: 'Sentiment Distribution',
+                                    font: {
+                                        size: 16
+                                    }
+                                }
+                            }
+                        }
+                    };
+                    break;
+                    
+                case 'entities':
+                    chartConfig = {
+                        type: 'bar',
+                        data: {
+                            labels: ['People', 'Organizations', 'Locations', 'Products', 'Dates'],
+                            datasets: [{
+                                label: 'Entities Extracted',
+                                data: [120, 85, 60, 45, 30],
+                                backgroundColor: '#3b82f6'
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                title: {
+                                    display: true,
+                                    text: 'Entity Extraction Results',
+                                    font: {
+                                        size: 16
+                                    }
+                                }
+                            },
+                            scales: {
+                                y: {
+                                    beginAtZero: true
+                                }
+                            }
+                        }
+                    };
+                    break;
+                    
+                case 'classification':
+                    chartConfig = {
+                        type: 'doughnut',
+                        data: {
+                            labels: ['Category A', 'Category B', 'Category C', 'Category D'],
+                            datasets: [{
+                                data: [35, 25, 20, 20],
+                                backgroundColor: [
+                                    '#8b5cf6',
+                                    '#ec4899',
+                                    '#f59e0b',
+                                    '#10b981'
+                                ]
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                title: {
+                                    display: true,
+                                    text: 'Classification Results',
+                                    font: {
+                                        size: 16
+                                    }
+                                }
+                            }
+                        }
+                    };
+                    break;
+                    
+                default:
+                    chartConfig = {
+                        type: 'bar',
+                        data: {
+                            labels: ['Processed', 'Enriched', 'Transformed'],
+                            datasets: [{
+                                label: 'Records',
+                                data: [dataset.length, dataset.length, dataset.length],
+                                backgroundColor: '#4f46e5'
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                title: {
+                                    display: true,
+                                    text: 'Enrichment Results',
+                                    font: {
+                                        size: 16
+                                    }
+                                }
+                            },
+                            scales: {
+                                y: {
+                                    beginAtZero: true
+                                }
+                            }
+                        }
+                    };
+            }
+            
+            resultsChart = new Chart(ctx, chartConfig);
+        }
+
+        function saveResults() {
+            showNotification('Success', 'Enriched dataset has been saved successfully', 'success');
+            
+            // In a real app, this would save back to the main ETL workflow
+            setTimeout(() => {
+                window.close();
+            }, 2000);
+        }
+
+        function showNotification(title, message, type) {
+            const notification = document.getElementById('notification');
+            const icon = notification.querySelector('.notification-icon');
+            const titleEl = document.getElementById('notificationTitle');
+            const messageEl = document.getElementById('notificationMessage');
+            
+            // Set notification content
+            titleEl.textContent = title;
+            messageEl.textContent = message;
+            
+            // Set notification type
+            icon.className = 'notification-icon';
+            switch(type) {
+                case 'success':
+                    icon.classList.add('notification-icon-success');
+                    icon.innerHTML = '<i class="fas fa-check"></i>';
+                    break;
+                case 'error':
+                    icon.classList.add('notification-icon-error');
+                    icon.innerHTML = '<i class="fas fa-exclamation"></i>';
+                    break;
+                case 'warning':
+                    icon.classList.add('notification-icon-warning');
+                    icon.innerHTML = '<i class="fas fa-exclamation-triangle"></i>';
+                    break;
+                default:
+                    icon.classList.add('notification-icon-info');
+                    icon.innerHTML = '<i class="fas fa-info"></i>';
+            }
+            
+            // Show notification
+            notification.classList.add('show');
+            
+            // Auto-hide after 5 seconds
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 5000);
+        }
+    </script>
+</body>
+</html>

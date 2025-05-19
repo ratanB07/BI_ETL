@@ -1,0 +1,1338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GENFLOW - Model Governance</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --primary-dark: #4338ca;
+            --primary-light: #6366f1;
+            --secondary: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --info: #3b82f6;
+            --dark: #1e293b;
+            --light: #f8fafc;
+            --gray: #64748b;
+            --gray-light: #e2e8f0;
+            --success-bg: #ecfdf5;
+            --error-bg: #fef2f2;
+            --warning-bg: #fffbeb;
+            --info-bg: #eff6ff;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        }
+
+        body {
+            background-color: #f8fafc;
+            color: var(--dark);
+        }
+
+        /* Header styles */
+        .header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            position: relative;
+            z-index: 10;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-icon {
+            background-color: black;
+            border-radius: 8px;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            color: var(--primary);
+            font-size: 20px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .logo-text {
+            font-weight: 700;
+            font-size: 22px;
+            letter-spacing: 0.5px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Dashboard Grid */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .dashboard-card {
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            border: 1px solid var(--gray-light);
+            overflow: hidden;
+        }
+
+        .dashboard-card.full-width {
+            grid-column: 1 / -1;
+        }
+
+        .card-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--gray-light);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #f8fafc;
+        }
+
+        .card-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .card-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .card-body {
+            padding: 20px;
+        }
+
+        /* Model Cards */
+        .model-card {
+            border-left: 4px solid var(--primary);
+            transition: all 0.3s ease;
+            margin-bottom: 15px;
+        }
+
+        .model-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .model-card-header {
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            background-color: white;
+        }
+
+        .model-name {
+            font-weight: 600;
+            font-size: 15px;
+            color: var(--dark);
+        }
+
+        .model-type {
+            font-size: 12px;
+            padding: 3px 8px;
+            border-radius: 12px;
+            background-color: var(--info-bg);
+            color: var(--info);
+        }
+
+        .model-details {
+            padding: 15px;
+            background-color: #f8fafc;
+            border-top: 1px solid var(--gray-light);
+            display: none;
+        }
+
+        .model-metrics {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .metric-item {
+            background-color: white;
+            padding: 10px;
+            border-radius: 6px;
+            text-align: center;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+        }
+
+        .metric-label {
+            font-size: 12px;
+            color: var(--gray);
+            margin-bottom: 5px;
+        }
+
+        .metric-value {
+            font-weight: 600;
+            font-size: 16px;
+            color: var(--dark);
+        }
+
+        .metric-good {
+            color: var(--secondary);
+        }
+
+        .metric-warning {
+            color: var(--warning);
+        }
+
+        .metric-bad {
+            color: var(--danger);
+        }
+
+        .model-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .btn {
+            padding: 8px 15px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-primary {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-dark);
+        }
+
+        .btn-secondary {
+            background-color: white;
+            color: var(--primary);
+            border: 1px solid var(--gray-light);
+        }
+
+        .btn-secondary:hover {
+            background-color: #f8fafc;
+        }
+
+        .btn-danger {
+            background-color: var(--danger);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background-color: #dc2626;
+        }
+
+        /* Charts */
+        .chart-container {
+            width: 100%;
+            height: 300px;
+            margin-top: 15px;
+        }
+
+        /* Tables */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+
+        .data-table th {
+            background-color: #f8fafc;
+            padding: 10px 15px;
+            text-align: left;
+            font-weight: 600;
+            color: var(--dark);
+            border-bottom: 1px solid var(--gray-light);
+        }
+
+        .data-table td {
+            padding: 10px 15px;
+            border-bottom: 1px solid var(--gray-light);
+            color: var(--dark);
+        }
+
+        .data-table tr:hover {
+            background-color: #f8fafc;
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid var(--gray-light);
+            margin-bottom: 20px;
+        }
+
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            font-weight: 500;
+            color: var(--gray);
+            border-bottom: 3px solid transparent;
+            transition: all 0.2s ease;
+        }
+
+        .tab.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+
+        .tab:hover:not(.active) {
+            color: var(--dark);
+        }
+
+        /* LLM Feedback Section */
+        .llm-feedback {
+            background-color: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 20px;
+            border: 1px solid var(--gray-light);
+        }
+
+        .llm-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .llm-title {
+            font-weight: 600;
+            font-size: 16px;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .llm-content {
+            background-color: #f8fafc;
+            padding: 15px;
+            border-radius: 6px;
+            border: 1px solid var(--gray-light);
+            line-height: 1.6;
+        }
+
+        .llm-suggestions {
+            margin-top: 15px;
+        }
+
+        .suggestion-item {
+            padding: 10px;
+            background-color: white;
+            border: 1px solid var(--gray-light);
+            border-radius: 6px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .suggestion-item:hover {
+            background-color: #f0f4ff;
+            border-color: var(--primary-light);
+        }
+
+        /* Model Version Timeline */
+        .timeline {
+            position: relative;
+            padding-left: 30px;
+            margin-top: 20px;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 10px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background-color: var(--gray-light);
+        }
+
+        .timeline-item {
+            position: relative;
+            padding-bottom: 20px;
+        }
+
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -30px;
+            top: 5px;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background-color: var(--primary);
+            border: 2px solid white;
+        }
+
+        .timeline-date {
+            font-size: 12px;
+            color: var(--gray);
+            margin-bottom: 5px;
+        }
+
+        .timeline-content {
+            background-color: white;
+            padding: 15px;
+            border-radius: 6px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            border: 1px solid var(--gray-light);
+        }
+
+        /* Model Performance Alerts */
+        .alert {
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+        }
+
+        .alert-warning {
+            background-color: var(--warning-bg);
+            border-left: 4px solid var(--warning);
+        }
+
+        .alert-danger {
+            background-color: var(--error-bg);
+            border-left: 4px solid var(--danger);
+        }
+
+        .alert-success {
+            background-color: var(--success-bg);
+            border-left: 4px solid var(--secondary);
+        }
+
+        .alert-icon {
+            font-size: 18px;
+            margin-top: 2px;
+        }
+
+        .alert-content {
+            flex: 1;
+        }
+
+        .alert-title {
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .alert-message {
+            font-size: 14px;
+            color: var(--dark);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .model-metrics {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="logo">
+            <div class="logo-icon">G</div>
+            <div class="logo-text">GENFLOW</div>
+        </div>
+        <div style="color: white; font-weight: 500;">Model Versioning, Monitoring & Governance</div>
+        <div style="display: flex; align-items: center; gap: 15px;">
+            <div style="background: rgba(255,255,255,0.1); padding: 6px 12px; border-radius: 20px; font-size: 14px;">
+                <i class="fas fa-circle" style="color: #10b981; font-size: 10px;"></i> Connected
+            </div>
+            <button onclick="refreshData()" style="background: rgba(255,255,255,0.1); border: none; color: white; padding: 8px 15px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 8px;">
+                <i class="fas fa-sync-alt"></i> Refresh
+            </button>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="tabs">
+            <div class="tab active" onclick="switchTab('models')">Model Inventory</div>
+            <div class="tab" onclick="switchTab('monitoring')">Performance Monitoring</div>
+            <div class="tab" onclick="switchTab('governance')">Governance & Compliance</div>
+            <div class="tab" onclick="switchTab('llm')">LLM Recommendations</div>
+        </div>
+
+        <!-- Models Tab -->
+        <div id="models-tab" class="tab-content">
+            <div class="dashboard-grid">
+                <div class="dashboard-card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <i class="fas fa-robot"></i>
+                            Model Summary
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px;">
+                            <div style="text-align: center;">
+                                <div style="font-size: 24px; font-weight: 600; color: var(--primary);" id="total-models">12</div>
+                                <div style="font-size: 13px; color: var(--gray);">Total Models</div>
+                            </div>
+                            <div style="text-align: center;">
+                                <div style="font-size: 24px; font-weight: 600; color: var(--secondary);" id="active-models">8</div>
+                                <div style="font-size: 13px; color: var(--gray);">Active</div>
+                            </div>
+                            <div style="text-align: center;">
+                                <div style="font-size: 24px; font-weight: 600; color: var(--warning);" id="retired-models">4</div>
+                                <div style="font-size: 13px; color: var(--gray);">Retired</div>
+                            </div>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="model-types-chart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="dashboard-card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <i class="fas fa-calendar-alt"></i>
+                            Recent Activity
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="timeline">
+                            <div class="timeline-item">
+                                <div class="timeline-date">Today, 10:42 AM</div>
+                                <div class="timeline-content">
+                                    <strong>Customer Churn Model v3.2</strong> was deployed to production
+                                </div>
+                            </div>
+                            <div class="timeline-item">
+                                <div class="timeline-date">Yesterday, 3:15 PM</div>
+                                <div class="timeline-content">
+                                    <strong>Sales Forecast Model v2.1</strong> performance alert triggered
+                                </div>
+                            </div>
+                            <div class="timeline-item">
+                                <div class="timeline-date">2 days ago</div>
+                                <div class="timeline-content">
+                                    <strong>Fraud Detection Model v1.5</strong> was trained with new data
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="dashboard-card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            Alerts
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="alert alert-warning">
+                            <div class="alert-icon">
+                                <i class="fas fa-exclamation-circle"></i>
+                            </div>
+                            <div class="alert-content">
+                                <div class="alert-title">Performance Degradation</div>
+                                <div class="alert-message">Sales Forecast Model accuracy dropped by 8% in last 7 days</div>
+                            </div>
+                        </div>
+                        <div class="alert alert-danger">
+                            <div class="alert-icon">
+                                <i class="fas fa-times-circle"></i>
+                            </div>
+                            <div class="alert-content">
+                                <div class="alert-title">Data Drift Detected</div>
+                                <div class="alert-message">Customer segmentation model input distribution changed significantly</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="dashboard-card full-width" style="margin-top: 20px;">
+                <div class="card-header">
+                    <div class="card-title">
+                        <i class="fas fa-boxes"></i>
+                        Model Inventory
+                    </div>
+                    <div class="card-actions">
+                        <button class="btn btn-primary">
+                            <i class="fas fa-plus"></i> New Model
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="model-card">
+                        <div class="model-card-header" onclick="toggleModelDetails(this)">
+                            <div>
+                                <div class="model-name">Customer Churn Prediction v3.2</div>
+                                <div style="display: flex; gap: 10px; margin-top: 5px;">
+                                    <span class="model-type">Classification</span>
+                                    <span style="font-size: 12px; color: var(--gray);">Last trained: 2 days ago</span>
+                                </div>
+                            </div>
+                            <div>
+                                <span style="font-size: 12px; background-color: var(--success-bg); color: var(--secondary); padding: 3px 8px; border-radius: 12px;">
+                                    <i class="fas fa-check-circle"></i> Active
+                                </span>
+                            </div>
+                        </div>
+                        <div class="model-details">
+                            <div class="model-metrics">
+                                <div class="metric-item">
+                                    <div class="metric-label">Accuracy</div>
+                                    <div class="metric-value metric-good">0.92</div>
+                                </div>
+                                <div class="metric-item">
+                                    <div class="metric-label">Precision</div>
+                                    <div class="metric-value metric-good">0.89</div>
+                                </div>
+                                <div class="metric-item">
+                                    <div class="metric-label">Recall</div>
+                                    <div class="metric-value metric-warning">0.81</div>
+                                </div>
+                                <div class="metric-item">
+                                    <div class="metric-label">F1 Score</div>
+                                    <div class="metric-value metric-good">0.85</div>
+                                </div>
+                                <div class="metric-item">
+                                    <div class="metric-label">Data Drift</div>
+                                    <div class="metric-value metric-good">2.1%</div>
+                                </div>
+                                <div class="metric-item">
+                                    <div class="metric-label">Version</div>
+                                    <div class="metric-value">3.2.0</div>
+                                </div>
+                            </div>
+                            <div class="chart-container">
+                                <div id="churn-model-chart"></div>
+                            </div>
+                            <div class="model-actions">
+                                <button class="btn btn-primary">
+                                    <i class="fas fa-rocket"></i> Deploy
+                                </button>
+                                <button class="btn btn-secondary">
+                                    <i class="fas fa-chart-line"></i> Monitor
+                                </button>
+                                <button class="btn btn-secondary">
+                                    <i class="fas fa-code"></i> View Code
+                                </button>
+                                <button class="btn btn-danger">
+                                    <i class="fas fa-trash"></i> Retire
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="model-card">
+                        <div class="model-card-header" onclick="toggleModelDetails(this)">
+                            <div>
+                                <div class="model-name">Sales Forecast v2.1</div>
+                                <div style="display: flex; gap: 10px; margin-top: 5px;">
+                                    <span class="model-type">Regression</span>
+                                    <span style="font-size: 12px; color: var(--gray);">Last trained: 1 week ago</span>
+                                </div>
+                            </div>
+                            <div>
+                                <span style="font-size: 12px; background-color: var(--warning-bg); color: var(--warning); padding: 3px 8px; border-radius: 12px;">
+                                    <i class="fas fa-exclamation-triangle"></i> Needs Review
+                                </span>
+                            </div>
+                        </div>
+                        <div class="model-details">
+                            <div class="model-metrics">
+                                <div class="metric-item">
+                                    <div class="metric-label">R² Score</div>
+                                    <div class="metric-value metric-warning">0.76</div>
+                                </div>
+                                <div class="metric-item">
+                                    <div class="metric-label">RMSE</div>
+                                    <div class="metric-value metric-warning">1245.32</div>
+                                </div>
+                                <div class="metric-item">
+                                    <div class="metric-label">MAE</div>
+                                    <div class="metric-value metric-warning">892.14</div>
+                                </div>
+                                <div class="metric-item">
+                                    <div class="metric-label">Data Drift</div>
+                                    <div class="metric-value metric-danger">15.8%</div>
+                                </div>
+                                <div class="metric-item">
+                                    <div class="metric-label">Version</div>
+                                    <div class="metric-value">2.1.3</div>
+                                </div>
+                                <div class="metric-item">
+                                    <div class="metric-label">Last Updated</div>
+                                    <div class="metric-value">7 days</div>
+                                </div>
+                            </div>
+                            <div class="chart-container">
+                                <div id="sales-model-chart"></div>
+                            </div>
+                            <div class="model-actions">
+                                <button class="btn btn-primary">
+                                    <i class="fas fa-sync-alt"></i> Retrain
+                                </button>
+                                <button class="btn btn-secondary">
+                                    <i class="fas fa-chart-line"></i> Monitor
+                                </button>
+                                <button class="btn btn-secondary">
+                                    <i class="fas fa-code"></i> View Code
+                                </button>
+                                <button class="btn btn-danger">
+                                    <i class="fas fa-trash"></i> Retire
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="model-card">
+                        <div class="model-card-header" onclick="toggleModelDetails(this)">
+                            <div>
+                                <div class="model-name">Fraud Detection v1.5</div>
+                                <div style="display: flex; gap: 10px; margin-top: 5px;">
+                                    <span class="model-type">Anomaly Detection</span>
+                                    <span style="font-size: 12px; color: var(--gray);">Last trained: 3 days ago</span>
+                                </div>
+                            </div>
+                            <div>
+                                <span style="font-size: 12px; background-color: var(--success-bg); color: var(--secondary); padding: 3px 8px; border-radius: 12px;">
+                                    <i class="fas fa-check-circle"></i> Active
+                                </span>
+                            </div>
+                        </div>
+                        <div class="model-details">
+                            <div class="model-metrics">
+                                <div class="metric-item">
+                                    <div class="metric-label">Precision</div>
+                                    <div class="metric-value metric-good">0.95</div>
+                                </div>
+                                <div class="metric-item">
+                                    <div class="metric-label">Recall</div>
+                                    <div class="metric-value metric-good">0.91</div>
+                                </div>
+                                <div class="metric-item">
+                                    <div class="metric-label">F1 Score</div>
+                                    <div class="metric-value metric-good">0.93</div>
+                                </div>
+                                <div class="metric-item">
+                                    <div class="metric-label">Data Drift</div>
+                                    <div class="metric-value metric-good">3.2%</div>
+                                </div>
+                                <div class="metric-item">
+                                    <div class="metric-label">Version</div>
+                                    <div class="metric-value">1.5.2</div>
+                                </div>
+                                <div class="metric-item">
+                                    <div class="metric-label">Alerts</div>
+                                    <div class="metric-value metric-good">12</div>
+                                </div>
+                            </div>
+                            <div class="chart-container">
+                                <div id="fraud-model-chart"></div>
+                            </div>
+                            <div class="model-actions">
+                                <button class="btn btn-primary">
+                                    <i class="fas fa-rocket"></i> Deploy
+                                </button>
+                                <button class="btn btn-secondary">
+                                    <i class="fas fa-chart-line"></i> Monitor
+                                </button>
+                                <button class="btn btn-secondary">
+                                    <i class="fas fa-code"></i> View Code
+                                </button>
+                                <button class="btn btn-danger">
+                                    <i class="fas fa-trash"></i> Retire
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Monitoring Tab -->
+        <div id="monitoring-tab" class="tab-content" style="display: none;">
+            <div class="dashboard-grid">
+                <div class="dashboard-card full-width">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <i class="fas fa-chart-line"></i>
+                            Model Performance Trends
+                        </div>
+                        <div class="card-actions">
+                            <select style="padding: 6px 12px; border-radius: 4px; border: 1px solid var(--gray-light);">
+                                <option>Last 7 days</option>
+                                <option>Last 30 days</option>
+                                <option>Last 90 days</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container">
+                            <canvas id="performance-trend-chart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="dashboard-card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <i class="fas fa-bell"></i>
+                            Performance Alerts
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="alert alert-danger">
+                            <div class="alert-icon">
+                                <i class="fas fa-exclamation-triangle"></i>
+                            </div>
+                            <div class="alert-content">
+                                <div class="alert-title">Critical Alert</div>
+                                <div class="alert-message">Sales Forecast RMSE increased by 22%</div>
+                            </div>
+                        </div>
+                        <div class="alert alert-warning">
+                            <div class="alert-icon">
+                                <i class="fas fa-exclamation-circle"></i>
+                            </div>
+                            <div class="alert-content">
+                                <div class="alert-title">Warning</div>
+                                <div class="alert-message">Customer Churn precision dropped by 5%</div>
+                            </div>
+                        </div>
+                        <div class="alert alert-success">
+                            <div class="alert-icon">
+                                <i class="fas fa-check-circle"></i>
+                            </div>
+                            <div class="alert-content">
+                                <div class="alert-title">Stable</div>
+                                <div class="alert-message">Fraud Detection performance within range</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="dashboard-card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <i class="fas fa-database"></i>
+                            Data Drift Analysis
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container">
+                            <canvas id="data-drift-chart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Governance Tab -->
+        <div id="governance-tab" class="tab-content" style="display: none;">
+            <div class="dashboard-grid">
+                <div class="dashboard-card full-width">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <i class="fas fa-shield-alt"></i>
+                            Model Governance
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Model</th>
+                                    <th>Version</th>
+                                    <th>Compliance Status</th>
+                                    <th>Last Audit</th>
+                                    <th>Approval</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Customer Churn Prediction</td>
+                                    <td>3.2.0</td>
+                                    <td><span style="color: var(--secondary); font-weight: 600;">Compliant</span></td>
+                                    <td>2 days ago</td>
+                                    <td><span style="color: var(--secondary); font-weight: 600;">Approved</span></td>
+                                    <td>
+                                        <button class="btn btn-secondary" style="padding: 5px 10px; font-size: 12px;">
+                                            <i class="fas fa-file-alt"></i> Report
+                                        </button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Sales Forecast</td>
+                                    <td>2.1.3</td>
+                                    <td><span style="color: var(--warning); font-weight: 600;">Review Needed</span></td>
+                                    <td>1 week ago</td>
+                                    <td><span style="color: var(--warning); font-weight: 600;">Pending</span></td>
+                                    <td>
+                                        <button class="btn btn-secondary" style="padding: 5px 10px; font-size: 12px;">
+                                            <i class="fas fa-file-alt"></i> Report
+                                        </button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Fraud Detection</td>
+                                    <td>1.5.2</td>
+                                    <td><span style="color: var(--secondary); font-weight: 600;">Compliant</span></td>
+                                    <td>3 days ago</td>
+                                    <td><span style="color: var(--secondary); font-weight: 600;">Approved</span></td>
+                                    <td>
+                                        <button class="btn btn-secondary" style="padding: 5px 10px; font-size: 12px;">
+                                            <i class="fas fa-file-alt"></i> Report
+                                        </button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="dashboard-card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <i class="fas fa-check-circle"></i>
+                            Compliance Checks
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div style="margin-bottom: 15px;">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                                <span>Bias Detection</span>
+                                <span style="color: var(--secondary); font-weight: 600;">Passed</span>
+                            </div>
+                            <div style="height: 6px; background-color: #e2e8f0; border-radius: 3px;">
+                                <div style="width: 100%; height: 100%; background-color: var(--secondary); border-radius: 3px;"></div>
+                            </div>
+                        </div>
+                        <div style="margin-bottom: 15px;">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                                <span>Explainability</span>
+                                <span style="color: var(--secondary); font-weight: 600;">Passed</span>
+                            </div>
+                            <div style="height: 6px; background-color: #e2e8f0; border-radius: 3px;">
+                                <div style="width: 95%; height: 100%; background-color: var(--secondary); border-radius: 3px;"></div>
+                            </div>
+                        </div>
+                        <div style="margin-bottom: 15px;">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                                <span>Data Privacy</span>
+                                <span style="color: var(--secondary); font-weight: 600;">Passed</span>
+                            </div>
+                            <div style="height: 6px; background-color: #e2e8f0; border-radius: 3px;">
+                                <div style="width: 98%; height: 100%; background-color: var(--secondary); border-radius: 3px;"></div>
+                            </div>
+                        </div>
+                        <div style="margin-bottom: 15px;">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                                <span>Performance SLA</span>
+                                <span style="color: var(--warning); font-weight: 600;">Warning</span>
+                            </div>
+                            <div style="height: 6px; background-color: #e2e8f0; border-radius: 3px;">
+                                <div style="width: 82%; height: 100%; background-color: var(--warning); border-radius: 3px;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="dashboard-card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <i class="fas fa-history"></i>
+                            Audit Trail
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div style="max-height: 400px; overflow-y: auto;">
+                            <div style="display: flex; flex-direction: column; gap: 10px;">
+                                <div style="font-size: 13px;">
+                                    <div style="font-weight: 600;">Model Updated</div>
+                                    <div style="color: var(--gray);">Customer Churn v3.2 by John Doe</div>
+                                    <div style="color: var(--gray); font-size: 12px;">2 days ago</div>
+                                </div>
+                                <div style="font-size: 13px;">
+                                    <div style="font-weight: 600;">Approval Granted</div>
+                                    <div style="color: var(--gray);">Sales Forecast v2.1 by Jane Smith</div>
+                                    <div style="color: var(--gray); font-size: 12px;">1 week ago</div>
+                                </div>
+                                <div style="font-size: 13px;">
+                                    <div style="font-weight: 600;">Compliance Check</div>
+                                    <div style="color: var(--gray);">Fraud Detection v1.5 by System</div>
+                                    <div style="color: var(--gray); font-size: 12px;">3 days ago</div>
+                                </div>
+                                <div style="font-size: 13px;">
+                                    <div style="font-weight: 600;">Model Retired</div>
+                                    <div style="color: var(--gray);">Product Recommendation v1.0 by Admin</div>
+                                    <div style="color: var(--gray); font-size: 12px;">2 weeks ago</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- LLM Recommendations Tab -->
+        <div id="llm-tab" class="tab-content" style="display: none;">
+            <div class="dashboard-grid">
+                <div class="dashboard-card full-width">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <i class="fas fa-robot"></i>
+                            LLM Model Recommendations
+                        </div>
+                        <div class="card-actions">
+                            <button class="btn btn-primary" onclick="generateLLMRecommendations()">
+                                <i class="fas fa-sync-alt"></i> Generate New
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="llm-feedback">
+                            <div class="llm-header">
+                                <div class="llm-title">
+                                    <i class="fas fa-lightbulb"></i>
+                                    Model Optimization Suggestions
+                                </div>
+                                <div style="font-size: 12px; color: var(--gray);">
+                                    Generated: Just now
+                                </div>
+                            </div>
+                            <div class="llm-content">
+                                <p>Based on the current model performance and data characteristics, our AI recommends the following optimizations:</p>
+                                <ul style="margin-top: 10px; padding-left: 20px;">
+                                    <li style="margin-bottom: 8px;">Consider implementing feature engineering for the Customer Churn model to improve recall by 5-8%</li>
+                                    <li style="margin-bottom: 8px;">Sales Forecast model would benefit from retraining with recent market trend data</li>
+                                    <li style="margin-bottom: 8px;">Fraud Detection model shows excellent performance but could be enhanced with additional anomaly detection features</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div class="llm-feedback" style="margin-top: 20px;">
+                            <div class="llm-header">
+                                <div class="llm-title">
+                                    <i class="fas fa-chart-line"></i>
+                                    Performance Improvement Opportunities
+                                </div>
+                            </div>
+                            <div class="llm-content">
+                                <div class="llm-suggestions">
+                                    <div class="suggestion-item">
+                                        <div style="font-weight: 600;">Hyperparameter Tuning</div>
+                                        <div style="font-size: 13px; color: var(--gray); margin-top: 5px;">
+                                            Recommended tuning for Random Forest parameters to optimize performance
+                                        </div>
+                                    </div>
+                                    <div class="suggestion-item">
+                                        <div style="font-weight: 600;">Ensemble Methods</div>
+                                        <div style="font-size: 13px; color: var(--gray); margin-top: 5px;">
+                                            Consider combining models with stacking or voting classifiers
+                                        </div>
+                                    </div>
+                                    <div class="suggestion-item">
+                                        <div style="font-weight: 600;">Feature Selection</div>
+                                        <div style="font-size: 13px; color: var(--gray); margin-top: 5px;">
+                                            Remove low-importance features to reduce noise and improve speed
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="llm-feedback" style="margin-top: 20px;">
+                            <div class="llm-header">
+                                <div class="llm-title">
+                                    <i class="fas fa-shield-alt"></i>
+                                    Governance Recommendations
+                                </div>
+                            </div>
+                            <div class="llm-content">
+                                <p>To enhance model governance and compliance:</p>
+                                <ul style="margin-top: 10px; padding-left: 20px;">
+                                    <li style="margin-bottom: 8px;">Implement automated bias detection checks for all customer-facing models</li>
+                                    <li style="margin-bottom: 8px;">Add explainability reports for regulatory compliance</li>
+                                    <li style="margin-bottom: 8px;">Set up automated alerts for data drift exceeding 5% threshold</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize charts
+        function initCharts() {
+            // Model Types Chart
+            const modelTypesCtx = document.getElementById('model-types-chart').getContext('2d');
+            new Chart(modelTypesCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Classification', 'Regression', 'Anomaly Detection', 'Clustering'],
+                    datasets: [{
+                        data: [6, 3, 2, 1],
+                        backgroundColor: [
+                            '#4f46e5',
+                            '#10b981',
+                            '#f59e0b',
+                            '#8b5cf6'
+                        ],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    cutout: '70%',
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+
+            // Performance Trend Chart
+            const performanceTrendCtx = document.getElementById('performance-trend-chart').getContext('2d');
+            new Chart(performanceTrendCtx, {
+                type: 'line',
+                data: {
+                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'],
+                    datasets: [
+                        {
+                            label: 'Customer Churn Accuracy',
+                            data: [0.85, 0.87, 0.89, 0.91, 0.92, 0.91, 0.92],
+                            borderColor: '#4f46e5',
+                            backgroundColor: 'rgba(79, 70, 229, 0.1)',
+                            fill: true,
+                            tension: 0.3
+                        },
+                        {
+                            label: 'Sales Forecast R²',
+                            data: [0.82, 0.81, 0.79, 0.78, 0.77, 0.76, 0.75],
+                            borderColor: '#10b981',
+                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                            fill: true,
+                            tension: 0.3
+                        },
+                        {
+                            label: 'Fraud Detection F1',
+                            data: [0.88, 0.89, 0.90, 0.91, 0.92, 0.93, 0.93],
+                            borderColor: '#f59e0b',
+                            backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                            fill: true,
+                            tension: 0.3
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: false,
+                            min: 0.7,
+                            max: 1.0
+                        }
+                    }
+                }
+            });
+
+            // Data Drift Chart
+            const dataDriftCtx = document.getElementById('data-drift-chart').getContext('2d');
+            new Chart(dataDriftCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Customer Churn', 'Sales Forecast', 'Fraud Detection', 'Product Rec', 'Price Model'],
+                    datasets: [{
+                        label: 'Data Drift %',
+                        data: [2.1, 15.8, 3.2, 8.5, 5.3],
+                        backgroundColor: [
+                            '#10b981',
+                            '#ef4444',
+                            '#10b981',
+                            '#f59e0b',
+                            '#10b981'
+                        ]
+                    }]
+                },
+                options: {
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 20
+                        }
+                    }
+                }
+            });
+
+            // Model-specific charts using ApexCharts
+            const churnModelChart = new ApexCharts(document.querySelector("#churn-model-chart"), {
+                series: [{
+                    name: 'Accuracy',
+                    data: [0.85, 0.88, 0.90, 0.91, 0.92]
+                }],
+                chart: {
+                    height: 200,
+                    type: 'line',
+                    toolbar: {
+                        show: false
+                    }
+                },
+                colors: ['#4f46e5'],
+                stroke: {
+                    width: 2,
+                    curve: 'smooth'
+                },
+                xaxis: {
+                    categories: ['v2.5', 'v2.8', 'v3.0', 'v3.1', 'v3.2'],
+                },
+                tooltip: {
+                    enabled: false
+                },
+                grid: {
+                    show: false
+                }
+            });
+            churnModelChart.render();
+
+            const salesModelChart = new ApexCharts(document.querySelector("#sales-model-chart"), {
+                series: [{
+                    name: 'R² Score',
+                    data: [0.80, 0.78, 0.77, 0.76, 0.75]
+                }],
+                chart: {
+                    height: 200,
+                    type: 'line',
+                    toolbar: {
+                        show: false
+                    }
+                },
+                colors: ['#ef4444'],
+                stroke: {
+                    width: 2,
+                    curve: 'smooth'
+                },
+                xaxis: {
+                    categories: ['v1.8', 'v2.0', 'v2.1', 'v2.1.1', 'v2.1.3'],
+                },
+                tooltip: {
+                    enabled: false
+                },
+                grid: {
+                    show: false
+                }
+            });
+            salesModelChart.render();
+
+            const fraudModelChart = new ApexCharts(document.querySelector("#fraud-model-chart"), {
+                series: [{
+                    name: 'F1 Score',
+                    data: [0.85, 0.88, 0.90, 0.92, 0.93]
+                }],
+                chart: {
+                    height: 200,
+                    type: 'line',
+                    toolbar: {
+                        show: false
+                    }
+                },
+                colors: ['#10b981'],
+                stroke: {
+                    width: 2,
+                    curve: 'smooth'
+                },
+                xaxis: {
+                    categories: ['v1.0', 'v1.2', 'v1.3', 'v1.4', 'v1.5'],
+                },
+                tooltip: {
+                    enabled: false
+                },
+                grid: {
+                    show: false
+                }
+            });
+            fraudModelChart.render();
+        }
+
+        // Toggle model details
+        function toggleModelDetails(header) {
+            const details = header.nextElementSibling;
+            if (details.style.display === 'block') {
+                details.style.display = 'none';
+            } else {
+                details.style.display = 'block';
+            }
+        }
+
+        // Switch tabs
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.style.display = 'none');
+            
+            document.querySelector(`.tab[onclick="switchTab('${tabName}')"]`).classList.add('active');
+            document.getElementById(`${tabName}-tab`).style.display = 'block';
+        }
+
+        // Generate LLM recommendations
+        function generateLLMRecommendations() {
+            // In a real implementation, this would call an API to generate new recommendations
+            alert("Generating new LLM recommendations... This would call your backend API in a real implementation.");
+        }
+
+        // Refresh data
+        function refreshData() {
+            // In a real implementation, this would refresh all data from the server
+            alert("Refreshing data... This would call your backend API in a real implementation.");
+        }
+
+        // Initialize everything when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            initCharts();
+        });
+    </script>
+</body>
+</html>

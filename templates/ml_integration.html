@@ -1,0 +1,1342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GENFLOW - ML Platform Integration</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --primary-dark: #4338ca;
+            --primary-light: #6366f1;
+            --secondary: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --info: #3b82f6;
+            --dark: #1e293b;
+            --light: #f8fafc;
+            --gray: #64748b;
+            --gray-light: #e2e8f0;
+            --aws-orange: #FF9900;
+            --azure-blue: #0078D4;
+            --databricks-red: #FF3621;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        }
+
+        body {
+            background-color: #f8fafc;
+            color: var(--dark);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-icon {
+            background-color: black;
+            border-radius: 8px;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            color: var(--primary);
+            font-size: 20px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .logo-text {
+            font-weight: 700;
+            font-size: 22px;
+            letter-spacing: 0.5px;
+        }
+
+        .header-title {
+            font-size: 16px;
+            font-weight: 500;
+            opacity: 0.9;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 6px 12px;
+            border-radius: 20px;
+        }
+
+        .main-title {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .main-title i {
+            font-size: 28px;
+        }
+
+        .platform-section {
+            margin-bottom: 40px;
+        }
+
+        .platform-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--gray-light);
+        }
+
+        .platform-title {
+            font-size: 20px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .platform-logo {
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 6px;
+            color: white;
+            font-size: 16px;
+        }
+
+        .aws-logo {
+            background-color: var(--aws-orange);
+        }
+
+        .azure-logo {
+            background-color: var(--azure-blue);
+        }
+
+        .databricks-logo {
+            background-color: var(--databricks-red);
+        }
+
+        .platform-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .connection-card {
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            padding: 20px;
+            border: 1px solid var(--gray-light);
+            transition: all 0.3s ease;
+        }
+
+        .connection-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
+            border-color: var(--primary-light);
+        }
+
+        .connection-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .connection-name {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .connection-status {
+            font-size: 12px;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-weight: 600;
+        }
+
+        .status-connected {
+            background-color: var(--success-bg);
+            color: var(--secondary);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .status-disconnected {
+            background-color: var(--error-bg);
+            color: var(--danger);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .connection-details {
+            margin-bottom: 15px;
+        }
+
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .detail-label {
+            color: var(--gray);
+            font-weight: 500;
+        }
+
+        .detail-value {
+            color: var(--dark);
+            font-weight: 600;
+        }
+
+        .connection-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .button {
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border: none;
+        }
+
+        .button-primary {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            box-shadow: 0 2px 4px rgba(79, 70, 229, 0.2);
+        }
+
+        .button-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(79, 70, 229, 0.3);
+        }
+
+        .button-secondary {
+            background: white;
+            color: var(--primary);
+            border: 1px solid var(--gray-light);
+        }
+
+        .button-secondary:hover {
+            background-color: #f1f5f9;
+        }
+
+        .button-danger {
+            background: linear-gradient(135deg, var(--danger) 0%, #dc2626 100%);
+            color: white;
+        }
+
+        .button-aws {
+            background: linear-gradient(135deg, var(--aws-orange) 0%, #e67e22 100%);
+            color: white;
+        }
+
+        .button-azure {
+            background: linear-gradient(135deg, var(--azure-blue) 0%, #004e8c 100%);
+            color: white;
+        }
+
+        .button-databricks {
+            background: linear-gradient(135deg, var(--databricks-red) 0%, #cc2a1a 100%);
+            color: white;
+        }
+
+        .model-list {
+            margin-top: 20px;
+        }
+
+        .model-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 15px;
+            background-color: white;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            border: 1px solid var(--gray-light);
+        }
+
+        .model-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .model-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 16px;
+        }
+
+        .model-name {
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .model-type {
+            font-size: 12px;
+            color: var(--gray);
+            margin-top: 2px;
+        }
+
+        .model-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .button-sm {
+            padding: 6px 12px;
+            font-size: 13px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: var(--dark);
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid var(--gray-light);
+            border-radius: 6px;
+            font-size: 14px;
+            transition: all 0.2s ease;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.2);
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background-color: white;
+            border-radius: 10px;
+            width: 500px;
+            max-width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        }
+
+        .modal-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--gray-light);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .modal-body {
+            padding: 20px;
+        }
+
+        .modal-footer {
+            padding: 16px 20px;
+            border-top: 1px solid var(--gray-light);
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        .close-modal {
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            color: var(--gray);
+        }
+
+        .spinner {
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .notification {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            padding: 16px;
+            max-width: 300px;
+            display: flex;
+            gap: 12px;
+            transform: translateY(20px);
+            opacity: 0;
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+
+        .notification.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .notification-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            color: white;
+            font-size: 12px;
+        }
+
+        .notification-icon-success {
+            background-color: var(--secondary);
+        }
+
+        .notification-icon-error {
+            background-color: var(--danger);
+        }
+
+        .notification-icon-warning {
+            background-color: var(--warning);
+        }
+
+        .notification-icon-info {
+            background-color: var(--info);
+        }
+
+        .notification-content {
+            flex-grow: 1;
+        }
+
+        .notification-title {
+            font-weight: 600;
+            margin-bottom: 4px;
+            color: var(--dark);
+        }
+
+        .notification-message {
+            font-size: 13px;
+            color: var(--gray);
+        }
+
+        .notification-close {
+            color: var(--gray);
+            cursor: pointer;
+            font-size: 14px;
+            align-self: flex-start;
+        }
+
+        .deployment-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+
+        .status-success {
+            background-color: var(--secondary);
+        }
+
+        .status-error {
+            background-color: var(--danger);
+        }
+
+        .status-processing {
+            background-color: var(--warning);
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid var(--gray-light);
+            margin-bottom: 20px;
+        }
+
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            font-weight: 500;
+            color: var(--gray);
+            border-bottom: 3px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .tab.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .llm-config {
+            background-color: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .llm-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .llm-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .llm-description {
+            color: var(--gray);
+            margin-bottom: 15px;
+            font-size: 14px;
+        }
+
+        .llm-features {
+            margin-top: 20px;
+        }
+
+        .feature-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+
+        .feature-icon {
+            color: var(--primary);
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="logo">
+            <div class="logo-icon">G</div>
+            <div class="logo-text">GENFLOW</div>
+        </div>
+        <div class="header-title">ML Platform Integration</div>
+    </div>
+
+    <div class="container">
+        <h1 class="main-title">
+            <i class="fas fa-cloud"></i>
+            Integration with External ML Platforms
+        </h1>
+
+        <div class="tabs">
+            <div class="tab active" onclick="setActiveTab(this, 'connections')">Connections</div>
+            <div class="tab" onclick="setActiveTab(this, 'llm')">LLM Configuration</div>
+            <div class="tab" onclick="setActiveTab(this, 'deployments')">Model Deployments</div>
+        </div>
+
+        <div class="tab-content active" id="connections-tab">
+            <!-- AWS SageMaker Section -->
+            <div class="platform-section">
+                <div class="platform-header">
+                    <h2 class="platform-title">
+                        <div class="platform-logo aws-logo">
+                            <i class="fab fa-aws"></i>
+                        </div>
+                        AWS SageMaker
+                    </h2>
+                    <button class="button button-primary button-aws" onclick="showConnectModal('aws')">
+                        <i class="fas fa-plus"></i>
+                        New Connection
+                    </button>
+                </div>
+
+                <div class="platform-content">
+                    <div class="connection-card">
+                        <div class="connection-header">
+                            <div class="connection-name">Production Sagemaker</div>
+                            <div class="connection-status status-connected">Connected</div>
+                        </div>
+                        <div class="connection-details">
+                            <div class="detail-row">
+                                <span class="detail-label">Region:</span>
+                                <span class="detail-value">us-east-1</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="detail-label">Last Used:</span>
+                                <span class="detail-value">2 hours ago</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="detail-label">Models:</span>
+                                <span class="detail-value">12 deployed</span>
+                            </div>
+                        </div>
+                        <div class="connection-actions">
+                            <button class="button button-secondary button-sm">
+                                <i class="fas fa-eye"></i>
+                                View
+                            </button>
+                            <button class="button button-danger button-sm">
+                                <i class="fas fa-trash"></i>
+                                Remove
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="connection-card">
+                        <div class="connection-header">
+                            <div class="connection-name">Dev Sagemaker</div>
+                            <div class="connection-status status-disconnected">Disconnected</div>
+                        </div>
+                        <div class="connection-details">
+                            <div class="detail-row">
+                                <span class="detail-label">Region:</span>
+                                <span class="detail-value">us-west-2</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="detail-label">Last Used:</span>
+                                <span class="detail-value">5 days ago</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="detail-label">Models:</span>
+                                <span class="detail-value">3 deployed</span>
+                            </div>
+                        </div>
+                        <div class="connection-actions">
+                            <button class="button button-primary button-sm button-aws">
+                                <i class="fas fa-plug"></i>
+                                Connect
+                            </button>
+                            <button class="button button-danger button-sm">
+                                <i class="fas fa-trash"></i>
+                                Remove
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="model-list">
+                    <h3 style="margin-bottom: 15px; font-size: 16px; color: var(--dark);">Available Models</h3>
+                    
+                    <div class="model-item">
+                        <div class="model-info">
+                            <div class="model-icon" style="background-color: var(--aws-orange);">
+                                <i class="fas fa-brain"></i>
+                            </div>
+                            <div>
+                                <div class="model-name">Customer Churn Predictor</div>
+                                <div class="model-type">Random Forest - Classification</div>
+                            </div>
+                        </div>
+                        <div class="model-actions">
+                            <button class="button button-primary button-sm" onclick="deployModel('aws', 'Customer Churn Predictor')">
+                                <i class="fas fa-rocket"></i>
+                                Deploy
+                            </button>
+                            <button class="button button-secondary button-sm">
+                                <i class="fas fa-chart-line"></i>
+                                Monitor
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="model-item">
+                        <div class="model-info">
+                            <div class="model-icon" style="background-color: var(--aws-orange);">
+                                <i class="fas fa-brain"></i>
+                            </div>
+                            <div>
+                                <div class="model-name">Sales Forecasting</div>
+                                <div class="model-type">XGBoost - Regression</div>
+                            </div>
+                        </div>
+                        <div class="model-actions">
+                            <button class="button button-primary button-sm" onclick="deployModel('aws', 'Sales Forecasting')">
+                                <i class="fas fa-rocket"></i>
+                                Deploy
+                            </button>
+                            <button class="button button-secondary button-sm">
+                                <i class="fas fa-chart-line"></i>
+                                Monitor
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Azure ML Section -->
+            <div class="platform-section">
+                <div class="platform-header">
+                    <h2 class="platform-title">
+                        <div class="platform-logo azure-logo">
+                            <i class="fab fa-microsoft"></i>
+                        </div>
+                        Azure Machine Learning
+                    </h2>
+                    <button class="button button-primary button-azure" onclick="showConnectModal('azure')">
+                        <i class="fas fa-plus"></i>
+                        New Connection
+                    </button>
+                </div>
+
+                <div class="platform-content">
+                    <div class="connection-card">
+                        <div class="connection-header">
+                            <div class="connection-name">Azure ML East</div>
+                            <div class="connection-status status-connected">Connected</div>
+                        </div>
+                        <div class="connection-details">
+                            <div class="detail-row">
+                                <span class="detail-label">Workspace:</span>
+                                <span class="detail-value">genflow-ml-prod</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="detail-label">Region:</span>
+                                <span class="detail-value">eastus</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="detail-label">Compute:</span>
+                                <span class="detail-value">4 clusters</span>
+                            </div>
+                        </div>
+                        <div class="connection-actions">
+                            <button class="button button-secondary button-sm">
+                                <i class="fas fa-eye"></i>
+                                View
+                            </button>
+                            <button class="button button-danger button-sm">
+                                <i class="fas fa-trash"></i>
+                                Remove
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="model-list">
+                    <h3 style="margin-bottom: 15px; font-size: 16px; color: var(--dark);">Available Models</h3>
+                    
+                    <div class="model-item">
+                        <div class="model-info">
+                            <div class="model-icon" style="background-color: var(--azure-blue);">
+                                <i class="fas fa-brain"></i>
+                            </div>
+                            <div>
+                                <div class="model-name">Fraud Detection</div>
+                                <div class="model-type">Neural Network - Classification</div>
+                            </div>
+                        </div>
+                        <div class="model-actions">
+                            <button class="button button-primary button-sm button-azure" onclick="deployModel('azure', 'Fraud Detection')">
+                                <i class="fas fa-rocket"></i>
+                                Deploy
+                            </button>
+                            <button class="button button-secondary button-sm">
+                                <i class="fas fa-chart-line"></i>
+                                Monitor
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Databricks Section -->
+            <div class="platform-section">
+                <div class="platform-header">
+                    <h2 class="platform-title">
+                        <div class="platform-logo databricks-logo">
+                            <i class="fas fa-database"></i>
+                        </div>
+                        Databricks ML
+                    </h2>
+                    <button class="button button-primary button-databricks" onclick="showConnectModal('databricks')">
+                        <i class="fas fa-plus"></i>
+                        New Connection
+                    </button>
+                </div>
+
+                <div class="platform-content">
+                    <div class="connection-card">
+                        <div class="connection-header">
+                            <div class="connection-name">Databricks Prod</div>
+                            <div class="connection-status status-connected">Connected</div>
+                        </div>
+                        <div class="connection-details">
+                            <div class="detail-row">
+                                <span class="detail-label">Workspace:</span>
+                                <span class="detail-value">genflow-db-prod</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="detail-label">Cluster:</span>
+                                <span class="detail-value">Standard_DS3_v2</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="detail-label">Notebooks:</span>
+                                <span class="detail-value">24 active</span>
+                            </div>
+                        </div>
+                        <div class="connection-actions">
+                            <button class="button button-secondary button-sm">
+                                <i class="fas fa-eye"></i>
+                                View
+                            </button>
+                            <button class="button button-danger button-sm">
+                                <i class="fas fa-trash"></i>
+                                Remove
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="model-list">
+                    <h3 style="margin-bottom: 15px; font-size: 16px; color: var(--dark);">Available Models</h3>
+                    
+                    <div class="model-item">
+                        <div class="model-info">
+                            <div class="model-icon" style="background-color: var(--databricks-red);">
+                                <i class="fas fa-brain"></i>
+                            </div>
+                            <div>
+                                <div class="model-name">Product Recommendation</div>
+                                <div class="model-type">Collaborative Filtering</div>
+                            </div>
+                        </div>
+                        <div class="model-actions">
+                            <button class="button button-primary button-sm button-databricks" onclick="deployModel('databricks', 'Product Recommendation')">
+                                <i class="fas fa-rocket"></i>
+                                Deploy
+                            </button>
+                            <button class="button button-secondary button-sm">
+                                <i class="fas fa-chart-line"></i>
+                                Monitor
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="model-item">
+                        <div class="model-info">
+                            <div class="model-icon" style="background-color: var(--databricks-red);">
+                                <i class="fas fa-brain"></i>
+                            </div>
+                            <div>
+                                <div class="model-name">NLP Sentiment Analysis</div>
+                                <div class="model-type">BERT - Classification</div>
+                            </div>
+                        </div>
+                        <div class="model-actions">
+                            <button class="button button-primary button-sm button-databricks" onclick="deployModel('databricks', 'NLP Sentiment Analysis')">
+                                <i class="fas fa-rocket"></i>
+                                Deploy
+                            </button>
+                            <button class="button button-secondary button-sm">
+                                <i class="fas fa-chart-line"></i>
+                                Monitor
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="tab-content" id="llm-tab">
+            <div class="llm-config">
+                <div class="llm-header">
+                    <h3 class="llm-title">LLM Integration for ETL</h3>
+                    <div class="deployment-status">
+                        <div class="status-dot status-success"></div>
+                        <span>Active</span>
+                    </div>
+                </div>
+                <p class="llm-description">
+                    Configure Large Language Model integration to enhance your ETL workflows with AI-powered transformations,
+                    data quality checks, and automated documentation generation.
+                </p>
+                
+                <div class="form-group">
+                    <label class="form-label">LLM Provider</label>
+                    <select class="form-control" id="llm-provider">
+                        <option value="openai">OpenAI (GPT-4)</option>
+                        <option value="anthropic">Anthropic (Claude 2)</option>
+                        <option value="azure">Azure OpenAI</option>
+                        <option value="aws">AWS Bedrock</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">API Key</label>
+                    <input type="password" class="form-control" id="llm-api-key" placeholder="Enter your API key">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Model Version</label>
+                    <input type="text" class="form-control" id="llm-model" placeholder="gpt-4-1106-preview" value="gpt-4-1106-preview">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Temperature</label>
+                    <input type="range" class="form-control" id="llm-temperature" min="0" max="1" step="0.1" value="0.7">
+                    <div style="display: flex; justify-content: space-between; font-size: 12px; color: var(--gray);">
+                        <span>Precise</span>
+                        <span>Balanced</span>
+                        <span>Creative</span>
+                    </div>
+                </div>
+
+                <div class="llm-features">
+                    <h4 style="margin-bottom: 15px; font-size: 16px; color: var(--dark);">ETL Features</h4>
+                    
+                    <div class="feature-item">
+                        <i class="fas fa-check-circle feature-icon"></i>
+                        <span>Automated data transformation suggestions</span>
+                    </div>
+                    <div class="feature-item">
+                        <i class="fas fa-check-circle feature-icon"></i>
+                        <span>Natural language to SQL conversion</span>
+                    </div>
+                    <div class="feature-item">
+                        <i class="fas fa-check-circle feature-icon"></i>
+                        <span>Data quality anomaly detection</span>
+                    </div>
+                    <div class="feature-item">
+                        <i class="fas fa-check-circle feature-icon"></i>
+                        <span>Automated pipeline documentation</span>
+                    </div>
+                    <div class="feature-item">
+                        <i class="fas fa-check-circle feature-icon"></i>
+                        <span>Schema mapping assistance</span>
+                    </div>
+                </div>
+
+                <button class="button button-primary" style="margin-top: 20px;">
+                    <i class="fas fa-save"></i>
+                    Save Configuration
+                </button>
+            </div>
+        </div>
+
+        <div class="tab-content" id="deployments-tab">
+            <h3 style="margin-bottom: 20px; font-size: 18px; color: var(--dark);">Active Deployments</h3>
+            
+            <div class="model-list">
+                <div class="model-item">
+                    <div class="model-info">
+                        <div class="model-icon" style="background-color: var(--aws-orange);">
+                            <i class="fab fa-aws"></i>
+                        </div>
+                        <div>
+                            <div class="model-name">Customer Churn Predictor</div>
+                            <div class="model-type">AWS SageMaker - us-east-1</div>
+                        </div>
+                    </div>
+                    <div class="model-actions">
+                        <div class="deployment-status">
+                            <div class="status-dot status-success"></div>
+                            <span>Active</span>
+                        </div>
+                        <button class="button button-secondary button-sm">
+                            <i class="fas fa-chart-line"></i>
+                            Metrics
+                        </button>
+                        <button class="button button-danger button-sm">
+                            <i class="fas fa-trash"></i>
+                            Undeploy
+                        </button>
+                    </div>
+                </div>
+
+                <div class="model-item">
+                    <div class="model-info">
+                        <div class="model-icon" style="background-color: var(--azure-blue);">
+                            <i class="fab fa-microsoft"></i>
+                        </div>
+                        <div>
+                            <div class="model-name">Fraud Detection</div>
+                            <div class="model-type">Azure ML - eastus</div>
+                        </div>
+                    </div>
+                    <div class="model-actions">
+                        <div class="deployment-status">
+                            <div class="status-dot status-success"></div>
+                            <span>Active</span>
+                        </div>
+                        <button class="button button-secondary button-sm">
+                            <i class="fas fa-chart-line"></i>
+                            Metrics
+                        </button>
+                        <button class="button button-danger button-sm">
+                            <i class="fas fa-trash"></i>
+                            Undeploy
+                        </button>
+                    </div>
+                </div>
+
+                <div class="model-item">
+                    <div class="model-info">
+                        <div class="model-icon" style="background-color: var(--databricks-red);">
+                            <i class="fas fa-database"></i>
+                        </div>
+                        <div>
+                            <div class="model-name">Product Recommendation</div>
+                            <div class="model-type">Databricks ML - genflow-db-prod</div>
+                        </div>
+                    </div>
+                    <div class="model-actions">
+                        <div class="deployment-status">
+                            <div class="status-dot status-processing"></div>
+                            <span>Deploying...</span>
+                        </div>
+                        <button class="button button-secondary button-sm" disabled>
+                            <i class="fas fa-chart-line"></i>
+                            Metrics
+                        </button>
+                        <button class="button button-danger button-sm" disabled>
+                            <i class="fas fa-trash"></i>
+                            Undeploy
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Connect Modal -->
+    <div class="modal" id="connect-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title" id="modal-title">Connect to AWS SageMaker</h3>
+                <button class="close-modal" onclick="hideConnectModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">Connection Name</label>
+                    <input type="text" class="form-control" id="connection-name" placeholder="e.g. Production Sagemaker">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Access Key ID</label>
+                    <input type="text" class="form-control" id="access-key" placeholder="AKIAXXXXXXXXXXXXXXXX">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Secret Access Key</label>
+                    <input type="password" class="form-control" id="secret-key" placeholder="XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Region</label>
+                    <select class="form-control" id="region">
+                        <option value="us-east-1">US East (N. Virginia) - us-east-1</option>
+                        <option value="us-west-2">US West (Oregon) - us-west-2</option>
+                        <option value="eu-west-1">EU (Ireland) - eu-west-1</option>
+                        <option value="ap-southeast-1">Asia Pacific (Singapore) - ap-southeast-1</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Role ARN (Optional)</label>
+                    <input type="text" class="form-control" id="role-arn" placeholder="arn:aws:iam::123456789012:role/GenflowMLRole">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="button button-secondary" onclick="hideConnectModal()">Cancel</button>
+                <button class="button button-primary" id="connect-button" onclick="connectPlatform()">
+                    <i class="fas fa-plug"></i>
+                    Connect
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Deployment Modal -->
+    <div class="modal" id="deploy-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title" id="deploy-title">Deploy Model to AWS SageMaker</h3>
+                <button class="close-modal" onclick="hideDeployModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">Model Name</label>
+                    <input type="text" class="form-control" id="deploy-model-name" readonly>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Deployment Name</label>
+                    <input type="text" class="form-control" id="deployment-name" placeholder="e.g. production-2023">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Instance Type</label>
+                    <select class="form-control" id="instance-type">
+                        <option value="ml.t2.medium">ml.t2.medium (2 vCPU, 4GB RAM)</option>
+                        <option value="ml.m5.large" selected>ml.m5.large (2 vCPU, 8GB RAM)</option>
+                        <option value="ml.m5.xlarge">ml.m5.xlarge (4 vCPU, 16GB RAM)</option>
+                        <option value="ml.g4dn.xlarge">ml.g4dn.xlarge (4 vCPU, 16GB RAM, GPU)</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Instance Count</label>
+                    <input type="number" class="form-control" id="instance-count" min="1" max="10" value="1">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Endpoint Name</label>
+                    <input type="text" class="form-control" id="endpoint-name" placeholder="e.g. churn-predictor-endpoint">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="button button-secondary" onclick="hideDeployModal()">Cancel</button>
+                <button class="button button-primary" id="deploy-button" onclick="startDeployment()">
+                    <i class="fas fa-rocket"></i>
+                    Deploy Model
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification Container -->
+    <div id="notification-container"></div>
+
+    <script>
+        // Global variables
+        let currentPlatform = '';
+        let currentModel = '';
+
+        // Set active tab
+        function setActiveTab(tabElement, tabId) {
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            tabElement.classList.add('active');
+            
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            document.getElementById(`${tabId}-tab`).classList.add('active');
+        }
+
+        // Show connect modal
+        function showConnectModal(platform) {
+            currentPlatform = platform;
+            const modal = document.getElementById('connect-modal');
+            const title = document.getElementById('modal-title');
+            
+            switch(platform) {
+                case 'aws':
+                    title.textContent = 'Connect to AWS SageMaker';
+                    break;
+                case 'azure':
+                    title.textContent = 'Connect to Azure Machine Learning';
+                    break;
+                case 'databricks':
+                    title.textContent = 'Connect to Databricks ML';
+                    break;
+            }
+            
+            modal.style.display = 'flex';
+        }
+
+        // Hide connect modal
+        function hideConnectModal() {
+            document.getElementById('connect-modal').style.display = 'none';
+        }
+
+        // Connect to platform
+        function connectPlatform() {
+            const button = document.getElementById('connect-button');
+            const originalText = button.innerHTML;
+            
+            button.innerHTML = '<i class="fas fa-spinner spinner"></i> Connecting...';
+            button.disabled = true;
+            
+            // Simulate API call
+            setTimeout(() => {
+                showNotification('Success', `Connected to ${currentPlatform} successfully!`, 'success');
+                hideConnectModal();
+                button.innerHTML = originalText;
+                button.disabled = false;
+                
+                // In a real app, you would update the UI with the new connection
+            }, 2000);
+        }
+
+        // Show deploy modal
+        function deployModel(platform, model) {
+            currentPlatform = platform;
+            currentModel = model;
+            
+            const modal = document.getElementById('deploy-modal');
+            const title = document.getElementById('deploy-title');
+            const modelName = document.getElementById('deploy-model-name');
+            
+            title.textContent = `Deploy Model to ${getPlatformName(platform)}`;
+            modelName.value = model;
+            
+            modal.style.display = 'flex';
+        }
+
+        // Hide deploy modal
+        function hideDeployModal() {
+            document.getElementById('deploy-modal').style.display = 'none';
+        }
+
+        // Start deployment
+        function startDeployment() {
+            const button = document.getElementById('deploy-button');
+            const originalText = button.innerHTML;
+            
+            button.innerHTML = '<i class="fas fa-spinner spinner"></i> Deploying...';
+            button.disabled = true;
+            
+            // Simulate deployment
+            setTimeout(() => {
+                showNotification('Success', `Model "${currentModel}" deployed to ${getPlatformName(currentPlatform)}!`, 'success');
+                hideDeployModal();
+                button.innerHTML = originalText;
+                button.disabled = false;
+                
+                // In a real app, you would update the deployments list
+            }, 3000);
+        }
+
+        // Get platform display name
+        function getPlatformName(platform) {
+            switch(platform) {
+                case 'aws': return 'AWS SageMaker';
+                case 'azure': return 'Azure ML';
+                case 'databricks': return 'Databricks ML';
+                default: return platform;
+            }
+        }
+
+        // Show notification
+        function showNotification(title, message, type) {
+            const container = document.getElementById('notification-container');
+            const notification = document.createElement('div');
+            notification.className = `notification ${type === 'error' ? 'notification-icon-error' : 
+                                      type === 'warning' ? 'notification-icon-warning' : 
+                                      type === 'success' ? 'notification-icon-success' : 'notification-icon-info'}`;
+            
+            notification.innerHTML = `
+                <div class="notification-icon ${type === 'error' ? 'notification-icon-error' : 
+                                      type === 'warning' ? 'notification-icon-warning' : 
+                                      type === 'success' ? 'notification-icon-success' : 'notification-icon-info'}">
+                    <i class="fas ${type === 'error' ? 'fa-exclamation-circle' : 
+                                  type === 'warning' ? 'fa-exclamation-triangle' : 
+                                  type === 'success' ? 'fa-check-circle' : 'fa-info-circle'}"></i>
+                </div>
+                <div class="notification-content">
+                    <div class="notification-title">${title}</div>
+                    <div class="notification-message">${message}</div>
+                </div>
+                <div class="notification-close" onclick="this.parentElement.remove()">
+                    <i class="fas fa-times"></i>
+                </div>
+            `;
+            
+            container.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.classList.add('show');
+            }, 10);
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+                setTimeout(() => {
+                    notification.remove();
+                }, 300);
+            }, 5000);
+        }
+
+        // Initialize the page
+        document.addEventListener('DOMContentLoaded', function() {
+            // Any initialization code can go here
+        });
+    </script>
+</body>
+</html>

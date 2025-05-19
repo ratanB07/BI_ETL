@@ -1,0 +1,1486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GENFLOW - Data Profiling & Exploration</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-chart-box-and-violin-plot@3.7.0/build/Chart.BoxPlot.min.js"></script>
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --primary-dark: #4338ca;
+            --primary-light: #6366f1;
+            --secondary: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --info: #3b82f6;
+            --dark: #1e293b;
+            --light: #f8fafc;
+            --gray: #64748b;
+            --gray-light: #e2e8f0;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        }
+
+        body {
+            background-color: #f8fafc;
+            color: var(--dark);
+        }
+
+        .header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            padding: 16px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-text {
+            font-weight: 700;
+            font-size: 22px;
+            letter-spacing: 0.5px;
+        }
+
+        .header-title {
+            font-size: 16px;
+            font-weight: 500;
+            opacity: 0.9;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 6px 12px;
+            border-radius: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Dashboard Grid Layout */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+        
+        .dashboard-card {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            border: 1px solid var(--gray-light);
+            overflow: hidden;
+        }
+        
+        .dashboard-card.full-width-card {
+            grid-column: 1 / -1;
+        }
+        
+        .card-header {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--gray-light);
+            font-weight: 600;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .card-header i {
+            color: var(--primary);
+        }
+        
+        .card-content {
+            padding: 16px;
+        }
+        
+        .overview-card {
+            border-top: 3px solid var(--primary);
+        }
+        
+        .quality-card {
+            border-top: 3px solid var(--secondary);
+        }
+        
+        .types-card {
+            border-top: 3px solid var(--warning);
+        }
+        
+        .numeric-card {
+            border-top: 3px solid var(--info);
+        }
+        
+        .chart-card {
+            border-top: 3px solid var(--primary-light);
+        }
+        
+        /* Stats items */
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid var(--gray-light);
+        }
+        
+        .stat-item:last-child {
+            border-bottom: none;
+        }
+        
+        .stat-label {
+            font-weight: 500;
+            color: var(--dark);
+        }
+        
+        .stat-value {
+            font-weight: 600;
+            color: var(--primary);
+        }
+        
+        .bad-stat {
+            color: var(--danger) !important;
+        }
+        
+        .good-stat {
+            color: var(--secondary) !important;
+        }
+        
+        /* Data description */
+        .data-description {
+            font-size: 14px;
+            line-height: 1.6;
+            color: var(--dark);
+        }
+        
+        /* Chart containers */
+        .chart-container {
+            width: 100%;
+            height: 100%;
+            min-height: 200px;
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid var(--gray-light);
+            margin-bottom: 20px;
+        }
+
+        .tab {
+            padding: 12px 20px;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .tab.active {
+            border-bottom-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .tab:hover:not(.active) {
+            background-color: var(--gray-light);
+        }
+
+        /* Data table */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+            margin-bottom: 20px;
+        }
+
+        .data-table th {
+            background-color: var(--primary);
+            color: white;
+            padding: 10px;
+            text-align: left;
+        }
+
+        .data-table td {
+            padding: 10px;
+            border-bottom: 1px solid var(--gray-light);
+        }
+
+        .data-table tr:nth-child(even) {
+            background-color: var(--light);
+        }
+
+        /* Loading spinner */
+        .loading-spinner {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 200px;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-radius: 50%;
+            border-top-color: var(--primary);
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* LLM Insights */
+        .llm-insights {
+            background-color: #f0f7ff;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 20px;
+            border-left: 4px solid var(--primary);
+        }
+
+        .llm-insights-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .llm-insights-header i {
+            font-size: 20px;
+            color: var(--primary);
+            margin-right: 10px;
+        }
+
+        .llm-insights-header h3 {
+            font-size: 18px;
+            color: var(--dark);
+        }
+
+        .llm-insight {
+            padding: 12px;
+            background-color: white;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+
+        .llm-insight-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .llm-insight-header i {
+            margin-right: 8px;
+            color: var(--primary);
+        }
+
+        .llm-insight-title {
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .llm-insight-content {
+            font-size: 14px;
+            color: var(--gray);
+            line-height: 1.5;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="logo">
+            <div class="logo-text">GENFLOW</div>
+        </div>
+        <div class="header-title">Data Profiling & Exploration (Alteryx & Informatica Style)</div>
+    </div>
+
+    <div class="container">
+        <div class="tabs">
+            <div class="tab active" onclick="showTab('summary')">Summary</div>
+            <div class="tab" onclick="showTab('quality')">Data Quality</div>
+            <div class="tab" onclick="showTab('distributions')">Distributions</div>
+            <div class="tab" onclick="showTab('correlations')">Correlations</div>
+            <div class="tab" onclick="showTab('llm')">LLM Insights</div>
+        </div>
+
+        <div id="summaryTab" class="tab-content">
+            <div class="dashboard-grid">
+                <!-- Overview Card -->
+                <div class="dashboard-card overview-card">
+                    <div class="card-header">
+                        <i class="fas fa-table"></i>
+                        Dataset Overview
+                    </div>
+                    <div class="card-content" id="overviewStats">
+                        <div class="loading-spinner">
+                            <div class="spinner"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Data Quality Card -->
+                <div class="dashboard-card quality-card">
+                    <div class="card-header">
+                        <i class="fas fa-check-circle"></i>
+                        Data Quality
+                    </div>
+                    <div class="card-content" id="qualityStats">
+                        <div class="loading-spinner">
+                            <div class="spinner"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Data Types Card -->
+                <div class="dashboard-card types-card">
+                    <div class="card-header">
+                        <i class="fas fa-code"></i>
+                        Data Types
+                    </div>
+                    <div class="card-content" id="typeStats">
+                        <div class="loading-spinner">
+                            <div class="spinner"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Numeric Stats Card -->
+                <div class="dashboard-card numeric-card">
+                    <div class="card-header">
+                        <i class="fas fa-calculator"></i>
+                        Numeric Statistics
+                    </div>
+                    <div class="card-content" id="numericStats">
+                        <div class="loading-spinner">
+                            <div class="spinner"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Missing Values Visualization -->
+                <div class="dashboard-card chart-card">
+                    <div class="card-header">
+                        <i class="fas fa-chart-pie"></i>
+                        Missing Values
+                    </div>
+                    <div class="card-content">
+                        <div class="chart-container" id="missingValuesChart"></div>
+                    </div>
+                </div>
+                
+                <!-- Data Distribution -->
+                <div class="dashboard-card chart-card">
+                    <div class="card-header">
+                        <i class="fas fa-chart-bar"></i>
+                        Data Distribution
+                    </div>
+                    <div class="card-content">
+                        <div class="chart-container" id="distributionChart"></div>
+                    </div>
+                </div>
+                
+                <!-- Outliers Detection -->
+                <div class="dashboard-card chart-card">
+                    <div class="card-header">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        Outliers Detection
+                    </div>
+                    <div class="card-content">
+                        <div class="chart-container" id="outliersChart"></div>
+                    </div>
+                </div>
+                
+                <!-- Data Description -->
+                <div class="dashboard-card full-width-card">
+                    <div class="card-header">
+                        <i class="fas fa-align-left"></i>
+                        Data Description
+                    </div>
+                    <div class="card-content" id="dataDescription">
+                        <div class="loading-spinner">
+                            <div class="spinner"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="qualityTab" class="tab-content" style="display: none;">
+            <div class="dashboard-grid">
+                <!-- Data Quality Issues -->
+                <div class="dashboard-card full-width-card">
+                    <div class="card-header">
+                        <i class="fas fa-exclamation-circle"></i>
+                        Data Quality Issues
+                    </div>
+                    <div class="card-content">
+                        <div id="qualityIssues">
+                            <div class="loading-spinner">
+                                <div class="spinner"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Completeness Analysis -->
+                <div class="dashboard-card">
+                    <div class="card-header">
+                        <i class="fas fa-check-square"></i>
+                        Completeness Analysis
+                    </div>
+                    <div class="card-content">
+                        <div class="chart-container" id="completenessChart"></div>
+                    </div>
+                </div>
+                
+                <!-- Uniqueness Analysis -->
+                <div class="dashboard-card">
+                    <div class="card-header">
+                        <i class="fas fa-fingerprint"></i>
+                        Uniqueness Analysis
+                    </div>
+                    <div class="card-content">
+                        <div class="chart-container" id="uniquenessChart"></div>
+                    </div>
+                </div>
+                
+                <!-- Validity Analysis -->
+                <div class="dashboard-card">
+                    <div class="card-header">
+                        <i class="fas fa-check-double"></i>
+                        Validity Analysis
+                    </div>
+                    <div class="card-content">
+                        <div class="chart-container" id="validityChart"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="distributionsTab" class="tab-content" style="display: none;">
+            <div class="dashboard-grid">
+                <!-- Numeric Distributions -->
+                <div class="dashboard-card full-width-card">
+                    <div class="card-header">
+                        <i class="fas fa-chart-line"></i>
+                        Numeric Distributions
+                    </div>
+                    <div class="card-content">
+                        <div class="chart-container" id="numericDistributionsChart"></div>
+                    </div>
+                </div>
+                
+                <!-- Categorical Distributions -->
+                <div class="dashboard-card full-width-card">
+                    <div class="card-header">
+                        <i class="fas fa-chart-pie"></i>
+                        Categorical Distributions
+                    </div>
+                    <div class="card-content">
+                        <div class="chart-container" id="categoricalDistributionsChart"></div>
+                    </div>
+                </div>
+                
+                <!-- Time Series Analysis -->
+                <div class="dashboard-card full-width-card">
+                    <div class="card-header">
+                        <i class="fas fa-clock"></i>
+                        Time Series Analysis
+                    </div>
+                    <div class="card-content">
+                        <div class="chart-container" id="timeSeriesChart"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="correlationsTab" class="tab-content" style="display: none;">
+            <div class="dashboard-grid">
+                <!-- Correlation Matrix -->
+                <div class="dashboard-card full-width-card">
+                    <div class="card-header">
+                        <i class="fas fa-project-diagram"></i>
+                        Correlation Matrix
+                    </div>
+                    <div class="card-content">
+                        <div class="chart-container" id="correlationMatrixChart"></div>
+                    </div>
+                </div>
+                
+                <!-- Scatter Plots -->
+                <div class="dashboard-card full-width-card">
+                    <div class="card-header">
+                        <i class="fas fa-braille"></i>
+                        Scatter Plots
+                    </div>
+                    <div class="card-content">
+                        <div class="chart-container" id="scatterPlotsChart"></div>
+                    </div>
+                </div>
+                
+                <!-- Pair Plots -->
+                <div class="dashboard-card full-width-card">
+                    <div class="card-header">
+                        <i class="fas fa-th-large"></i>
+                        Pair Plots
+                    </div>
+                    <div class="card-content">
+                        <div class="chart-container" id="pairPlotsChart"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="llmTab" class="tab-content" style="display: none;">
+            <div class="dashboard-grid">
+                <!-- LLM Insights -->
+                <div class="dashboard-card full-width-card">
+                    <div class="card-header">
+                        <i class="fas fa-robot"></i>
+                        AI-Powered Insights
+                    </div>
+                    <div class="card-content">
+                        <div class="llm-insights">
+                            <div class="llm-insights-header">
+                                <i class="fas fa-lightbulb"></i>
+                                <h3>Key Insights from Your Data</h3>
+                            </div>
+                            <div id="llmInsightsContent">
+                                <div class="loading-spinner">
+                                    <div class="spinner"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Data Recommendations -->
+                <div class="dashboard-card full-width-card">
+                    <div class="card-header">
+                        <i class="fas fa-clipboard-check"></i>
+                        Data Quality Recommendations
+                    </div>
+                    <div class="card-content">
+                        <div id="dataRecommendations">
+                            <div class="loading-spinner">
+                                <div class="spinner"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Transformation Suggestions -->
+                <div class="dashboard-card full-width-card">
+                    <div class="card-header">
+                        <i class="fas fa-magic"></i>
+                        Transformation Suggestions
+                    </div>
+                    <div class="card-content">
+                        <div id="transformationSuggestions">
+                            <div class="loading-spinner">
+                                <div class="spinner"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let currentData = null;
+        let currentColumns = [];
+        let charts = {};
+
+        // Initialize the dashboard when DOM is loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            // Get data from session storage
+            const dataProfile = JSON.parse(sessionStorage.getItem('dataProfile') || '{}');
+            
+            if (dataProfile.data && dataProfile.columns) {
+                currentData = dataProfile.data;
+                currentColumns = dataProfile.columns;
+                analyzeData();
+            } else {
+                // If no data, show error and redirect back after 3 seconds
+                document.getElementById('summaryTab').innerHTML = `
+                    <div style="text-align: center; padding: 40px;">
+                        <i class="fas fa-exclamation-triangle" style="font-size: 48px; color: var(--danger); margin-bottom: 20px;"></i>
+                        <h2 style="margin-bottom: 16px;">No Data Available</h2>
+                        <p style="margin-bottom: 24px;">Please upload data from the main ETL interface first.</p>
+                        <p>Redirecting back to main page in 3 seconds...</p>
+                    </div>
+                `;
+                
+                setTimeout(() => {
+                    window.close();
+                }, 3000);
+            }
+        });
+
+        // Tab switching function
+        function showTab(tabName) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.style.display = 'none';
+            });
+            
+            // Deactivate all tabs
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Show selected tab
+            document.getElementById(tabName + 'Tab').style.display = 'block';
+            
+            // Activate selected tab
+            document.querySelector(`.tab[onclick="showTab('${tabName}')"]`).classList.add('active');
+            
+            // Render charts if not already rendered
+            if (tabName === 'quality' && !charts.completenessChart) {
+                renderQualityCharts();
+            } else if (tabName === 'distributions' && !charts.numericDistributionsChart) {
+                renderDistributionCharts();
+            } else if (tabName === 'correlations' && !charts.correlationMatrixChart) {
+                renderCorrelationCharts();
+            } else if (tabName === 'llm' && !document.getElementById('llmInsightsContent').textContent.trim()) {
+                generateLLMInsights();
+            }
+        }
+
+        // Main data analysis function
+        function analyzeData() {
+            // Calculate basic statistics
+            calculateBasicStats();
+            
+            // Calculate data quality metrics
+            calculateQualityMetrics();
+            
+            // Render initial charts
+            renderInitialCharts();
+            
+            // Generate LLM insights (will be called when LLM tab is clicked)
+        }
+
+        function calculateBasicStats() {
+            const stats = {
+                rowCount: currentData.length,
+                columnCount: currentColumns.length,
+                numericColumns: 0,
+                categoricalColumns: 0,
+                textColumns: 0,
+                dateColumns: 0,
+                duplicateRows: 0,
+                totalMissingValues: 0
+            };
+            
+            // Check for duplicate rows
+            const uniqueRows = new Set();
+            currentData.forEach(row => {
+                const rowKey = currentColumns.map(col => row[col]).join('|');
+                if (uniqueRows.has(rowKey)) {
+                    stats.duplicateRows++;
+                } else {
+                    uniqueRows.add(rowKey);
+                }
+            });
+            
+            // Calculate column types and missing values
+            currentColumns.forEach(col => {
+                let sampleValue = currentData[0][col];
+                let type = determineColumnType(sampleValue);
+                
+                // Count missing values
+                let missingCount = 0;
+                currentData.forEach(row => {
+                    if (row[col] === null || row[col] === undefined || row[col] === '') {
+                        missingCount++;
+                    }
+                });
+                stats.totalMissingValues += missingCount;
+                
+                // Update type counts
+                if (type === 'numeric') stats.numericColumns++;
+                else if (type === 'categorical') stats.categoricalColumns++;
+                else if (type === 'text') stats.textColumns++;
+                else if (type === 'datetime') stats.dateColumns++;
+            });
+            
+            // Update overview stats
+            document.getElementById('overviewStats').innerHTML = `
+                <div class="stat-item">
+                    <span class="stat-label">Rows</span>
+                    <span class="stat-value">${stats.rowCount.toLocaleString()}</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Columns</span>
+                    <span class="stat-value">${stats.columnCount.toLocaleString()}</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Duplicate Rows</span>
+                    <span class="stat-value ${stats.duplicateRows > 0 ? 'bad-stat' : 'good-stat'}">${stats.duplicateRows.toLocaleString()}</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Missing Values</span>
+                    <span class="stat-value ${stats.totalMissingValues > 0 ? 'bad-stat' : 'good-stat'}">${stats.totalMissingValues.toLocaleString()}</span>
+                </div>
+            `;
+            
+            // Update type stats
+            document.getElementById('typeStats').innerHTML = `
+                <div class="stat-item">
+                    <span class="stat-label">Numeric</span>
+                    <span class="stat-value">${stats.numericColumns}</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Categorical</span>
+                    <span class="stat-value">${stats.categoricalColumns}</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Text</span>
+                    <span class="stat-value">${stats.textColumns}</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Date/Time</span>
+                    <span class="stat-value">${stats.dateColumns}</span>
+                </div>
+            `;
+            
+            // Update data description
+            document.getElementById('dataDescription').innerHTML = `
+                <p>This dataset contains ${stats.rowCount.toLocaleString()} rows and ${stats.columnCount.toLocaleString()} columns with a mix of numeric, categorical, and text data.</p>
+                <p>${stats.duplicateRows > 0 ? `There are ${stats.duplicateRows.toLocaleString()} duplicate rows that may need attention.` : 'No duplicate rows detected.'}</p>
+                <p>${stats.totalMissingValues > 0 ? `There are ${stats.totalMissingValues.toLocaleString()} missing values across all columns.` : 'No missing values detected.'}</p>
+            `;
+        }
+
+        function calculateQualityMetrics() {
+            const qualityMetrics = [];
+            let totalIssues = 0;
+            
+            currentColumns.forEach(col => {
+                const metrics = {
+                    column: col,
+                    type: determineColumnType(currentData[0][col]),
+                    missing: 0,
+                    unique: 0,
+                    zeros: 0,
+                    negatives: 0,
+                    outliers: 0,
+                    invalid: 0
+                };
+                
+                // Calculate metrics
+                const values = currentData.map(row => row[col]);
+                const uniqueValues = new Set(values);
+                metrics.unique = uniqueValues.size;
+                
+                values.forEach(val => {
+                    if (val === null || val === undefined || val === '') {
+                        metrics.missing++;
+                    } else if (metrics.type === 'numeric') {
+                        const numVal = Number(val);
+                        if (numVal === 0) metrics.zeros++;
+                        if (numVal < 0) metrics.negatives++;
+                    }
+                });
+                
+                // Simple outlier detection for numeric columns
+                if (metrics.type === 'numeric') {
+                    const numericValues = values.filter(v => v !== null && v !== undefined && v !== '').map(Number);
+                    if (numericValues.length > 0) {
+                        const q1 = percentile(numericValues, 25);
+                        const q3 = percentile(numericValues, 75);
+                        const iqr = q3 - q1;
+                        const lowerBound = q1 - 1.5 * iqr;
+                        const upperBound = q3 + 1.5 * iqr;
+                        
+                        metrics.outliers = numericValues.filter(v => v < lowerBound || v > upperBound).length;
+                    }
+                }
+                
+                // Count issues
+                const issues = metrics.missing + metrics.outliers + metrics.invalid;
+                if (issues > 0) totalIssues++;
+                
+                qualityMetrics.push(metrics);
+            });
+            
+            // Update quality stats
+            document.getElementById('qualityStats').innerHTML = `
+                <div class="stat-item">
+                    <span class="stat-label">Columns with Issues</span>
+                    <span class="stat-value ${totalIssues > 0 ? 'bad-stat' : 'good-stat'}">${totalIssues}</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Total Missing Values</span>
+                    <span class="stat-value">${qualityMetrics.reduce((sum, m) => sum + m.missing, 0).toLocaleString()}</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Total Outliers</span>
+                    <span class="stat-value">${qualityMetrics.reduce((sum, m) => sum + m.outliers, 0).toLocaleString()}</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Total Invalid Values</span>
+                    <span class="stat-value">${qualityMetrics.reduce((sum, m) => sum + m.invalid, 0).toLocaleString()}</span>
+                </div>
+            `;
+            
+            // Prepare quality issues table
+            const issuesHTML = qualityMetrics.map(metrics => {
+                const issues = [];
+                if (metrics.missing > 0) issues.push(`${metrics.missing} missing`);
+                if (metrics.outliers > 0) issues.push(`${metrics.outliers} outliers`);
+                if (metrics.invalid > 0) issues.push(`${metrics.invalid} invalid`);
+                
+                if (issues.length === 0) return '';
+                
+                return `
+                    <div class="stat-item">
+                        <span class="stat-label">${metrics.column}</span>
+                        <span class="stat-value bad-stat">${issues.join(', ')}</span>
+                    </div>
+                `;
+            }).filter(html => html !== '').join('');
+            
+            document.getElementById('qualityIssues').innerHTML = issuesHTML || `
+                <div style="text-align: center; padding: 20px; color: var(--secondary);">
+                    <i class="fas fa-check-circle" style="font-size: 24px; margin-bottom: 10px;"></i>
+                    <p>No significant data quality issues detected</p>
+                </div>
+            `;
+        }
+
+        function renderInitialCharts() {
+            // Missing values chart
+            const missingValuesCtx = document.getElementById('missingValuesChart').getContext('2d');
+            charts.missingValuesChart = new Chart(missingValuesCtx, {
+                type: 'bar',
+                data: {
+                    labels: currentColumns,
+                    datasets: [{
+                        label: 'Missing Values',
+                        data: currentColumns.map(col => {
+                            return currentData.filter(row => row[col] === null || row[col] === undefined || row[col] === '').length;
+                        }),
+                        backgroundColor: 'rgba(239, 68, 68, 0.7)',
+                        borderColor: 'rgba(239, 68, 68, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Count of Missing Values'
+                            }
+                        },
+                        x: {
+                            ticks: {
+                                autoSkip: false,
+                                maxRotation: 90,
+                                minRotation: 90
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // Distribution chart (for first numeric column)
+            const numericColumns = currentColumns.filter(col => {
+                return determineColumnType(currentData[0][col]) === 'numeric';
+            });
+            
+            if (numericColumns.length > 0) {
+                const firstNumericCol = numericColumns[0];
+                const numericValues = currentData.map(row => row[firstNumericCol]).filter(v => v !== null && v !== undefined);
+                
+                const distributionCtx = document.getElementById('distributionChart').getContext('2d');
+                charts.distributionChart = new Chart(distributionCtx, {
+                    type: 'histogram',
+                    data: {
+                        datasets: [{
+                            label: firstNumericCol,
+                            data: numericValues,
+                            backgroundColor: 'rgba(79, 70, 229, 0.7)',
+                            borderColor: 'rgba(79, 70, 229, 1)',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                title: {
+                                    display: true,
+                                    text: 'Frequency'
+                                }
+                            },
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: firstNumericCol
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+            
+            // Outliers chart (box plot for first numeric column)
+            if (numericColumns.length > 0) {
+                const firstNumericCol = numericColumns[0];
+                const numericValues = currentData.map(row => row[firstNumericCol]).filter(v => v !== null && v !== undefined);
+                
+                const outliersCtx = document.getElementById('outliersChart').getContext('2d');
+                charts.outliersChart = new Chart(outliersCtx, {
+                    type: 'boxplot',
+                    data: {
+                        labels: [firstNumericCol],
+                        datasets: [{
+                            backgroundColor: 'rgba(245, 158, 11, 0.5)',
+                            borderColor: 'rgba(245, 158, 11, 1)',
+                            borderWidth: 1,
+                            outlierBackgroundColor: 'rgba(239, 68, 68, 1)',
+                            outlierRadius: 5,
+                            data: [numericValues]
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                title: {
+                                    display: true,
+                                    text: firstNumericCol
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        function renderQualityCharts() {
+            // Completeness chart (percentage of non-missing values per column)
+            const completenessCtx = document.getElementById('completenessChart').getContext('2d');
+            charts.completenessChart = new Chart(completenessCtx, {
+                type: 'bar',
+                data: {
+                    labels: currentColumns,
+                    datasets: [{
+                        label: 'Completeness (%)',
+                        data: currentColumns.map(col => {
+                            const nonMissing = currentData.filter(row => row[col] !== null && row[col] !== undefined && row[col] !== '').length;
+                            return (nonMissing / currentData.length) * 100;
+                        }),
+                        backgroundColor: 'rgba(16, 185, 129, 0.7)',
+                        borderColor: 'rgba(16, 185, 129, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            title: {
+                                display: true,
+                                text: 'Percentage Complete'
+                            }
+                        },
+                        x: {
+                            ticks: {
+                                autoSkip: false,
+                                maxRotation: 90,
+                                minRotation: 90
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // Uniqueness chart (percentage of unique values per column)
+            const uniquenessCtx = document.getElementById('uniquenessChart').getContext('2d');
+            charts.uniquenessChart = new Chart(uniquenessCtx, {
+                type: 'bar',
+                data: {
+                    labels: currentColumns,
+                    datasets: [{
+                        label: 'Uniqueness (%)',
+                        data: currentColumns.map(col => {
+                            const uniqueValues = new Set(currentData.map(row => row[col]));
+                            return (uniqueValues.size / currentData.length) * 100;
+                        }),
+                        backgroundColor: 'rgba(59, 130, 246, 0.7)',
+                        borderColor: 'rgba(59, 130, 246, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            title: {
+                                display: true,
+                                text: 'Percentage Unique'
+                            }
+                        },
+                        x: {
+                            ticks: {
+                                autoSkip: false,
+                                maxRotation: 90,
+                                minRotation: 90
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function renderDistributionCharts() {
+            // Numeric distributions (histograms for first few numeric columns)
+            const numericColumns = currentColumns.filter(col => {
+                return determineColumnType(currentData[0][col]) === 'numeric';
+            }).slice(0, 5); // Limit to first 5 numeric columns
+            
+            if (numericColumns.length > 0) {
+                const numericDistributionsCtx = document.getElementById('numericDistributionsChart').getContext('2d');
+                charts.numericDistributionsChart = new Chart(numericDistributionsCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: numericColumns,
+                        datasets: numericColumns.map((col, i) => {
+                            const numericValues = currentData.map(row => row[col]).filter(v => v !== null && v !== undefined);
+                            return {
+                                label: col,
+                                data: numericValues,
+                                backgroundColor: `hsl(${i * 360 / numericColumns.length}, 70%, 70%)`,
+                                borderColor: `hsl(${i * 360 / numericColumns.length}, 70%, 50%)`,
+                                borderWidth: 1
+                            };
+                        })
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                title: {
+                                    display: true,
+                                    text: 'Frequency'
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+            
+            // Categorical distributions (pie charts for first few categorical columns)
+            const categoricalColumns = currentColumns.filter(col => {
+                const type = determineColumnType(currentData[0][col]);
+                return type === 'categorical' || type === 'text';
+            }).slice(0, 3); // Limit to first 3 categorical columns
+            
+            if (categoricalColumns.length > 0) {
+                const categoricalDistributionsCtx = document.getElementById('categoricalDistributionsChart').getContext('2d');
+                charts.categoricalDistributionsChart = new Chart(categoricalDistributionsCtx, {
+                    type: 'pie',
+                    data: {
+                        labels: Array.from(new Set(currentData.map(row => row[categoricalColumns[0]]))).slice(0, 10), // Limit to top 10 categories
+                        datasets: [{
+                            data: Array.from(new Set(currentData.map(row => row[categoricalColumns[0]]))).slice(0, 10).map(cat => {
+                                return currentData.filter(row => row[categoricalColumns[0]] === cat).length;
+                            }),
+                            backgroundColor: [
+                                'rgba(255, 99, 132, 0.7)',
+                                'rgba(54, 162, 235, 0.7)',
+                                'rgba(255, 206, 86, 0.7)',
+                                'rgba(75, 192, 192, 0.7)',
+                                'rgba(153, 102, 255, 0.7)',
+                                'rgba(255, 159, 64, 0.7)',
+                                'rgba(199, 199, 199, 0.7)',
+                                'rgba(83, 102, 255, 0.7)',
+                                'rgba(255, 99, 255, 0.7)',
+                                'rgba(99, 255, 132, 0.7)'
+                            ],
+                            borderColor: [
+                                'rgba(255, 99, 132, 1)',
+                                'rgba(54, 162, 235, 1)',
+                                'rgba(255, 206, 86, 1)',
+                                'rgba(75, 192, 192, 1)',
+                                'rgba(153, 102, 255, 1)',
+                                'rgba(255, 159, 64, 1)',
+                                'rgba(199, 199, 199, 1)',
+                                'rgba(83, 102, 255, 1)',
+                                'rgba(255, 99, 255, 1)',
+                                'rgba(99, 255, 132, 1)'
+                            ],
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            title: {
+                                display: true,
+                                text: `Distribution of ${categoricalColumns[0]}`
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        function renderCorrelationCharts() {
+            // Correlation matrix (for numeric columns)
+            const numericColumns = currentColumns.filter(col => {
+                return determineColumnType(currentData[0][col]) === 'numeric';
+            }).slice(0, 10); // Limit to first 10 numeric columns
+            
+            if (numericColumns.length > 1) {
+                // Calculate correlations
+                const correlations = [];
+                for (let i = 0; i < numericColumns.length; i++) {
+                    correlations[i] = [];
+                    for (let j = 0; j < numericColumns.length; j++) {
+                        if (i === j) {
+                            correlations[i][j] = 1;
+                        } else {
+                            const valuesI = currentData.map(row => row[numericColumns[i]]).filter(v => v !== null && v !== undefined);
+                            const valuesJ = currentData.map(row => row[numericColumns[j]]).filter(v => v !== null && v !== undefined);
+                            
+                            // Simple correlation calculation (Pearson)
+                            const meanI = valuesI.reduce((sum, val) => sum + val, 0) / valuesI.length;
+                            const meanJ = valuesJ.reduce((sum, val) => sum + val, 0) / valuesJ.length;
+                            
+                            let covariance = 0;
+                            let stdDevI = 0;
+                            let stdDevJ = 0;
+                            
+                            for (let k = 0; k < valuesI.length; k++) {
+                                covariance += (valuesI[k] - meanI) * (valuesJ[k] - meanJ);
+                                stdDevI += Math.pow(valuesI[k] - meanI, 2);
+                                stdDevJ += Math.pow(valuesJ[k] - meanJ, 2);
+                            }
+                            
+                            stdDevI = Math.sqrt(stdDevI / valuesI.length);
+                            stdDevJ = Math.sqrt(stdDevJ / valuesJ.length);
+                            
+                            correlations[i][j] = covariance / (valuesI.length * stdDevI * stdDevJ);
+                        }
+                    }
+                }
+                
+                const correlationMatrixCtx = document.getElementById('correlationMatrixChart').getContext('2d');
+                charts.correlationMatrixChart = new Chart(correlationMatrixCtx, {
+                    type: 'heatmap',
+                    data: {
+                        labels: numericColumns,
+                        datasets: [{
+                            label: 'Correlation',
+                            data: correlations.flatMap((row, i) => 
+                                row.map((value, j) => ({
+                                    x: numericColumns[j],
+                                    y: numericColumns[i],
+                                    v: value
+                                }))
+                            ),
+                            backgroundColor: function(context) {
+                                const value = context.dataset.data[context.dataIndex].v;
+                                const alpha = Math.abs(value);
+                                return value > 0 ? 
+                                    `rgba(16, 185, 129, ${alpha})` : 
+                                    `rgba(239, 68, 68, ${alpha})`;
+                            },
+                            borderWidth: 1,
+                            borderColor: 'rgba(0, 0, 0, 0.1)'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            tooltip: {
+                                callbacks: {
+                                    title: function(context) {
+                                        return `${context[0].raw.y} vs ${context[0].raw.x}`;
+                                    },
+                                    label: function(context) {
+                                        return `Correlation: ${context.raw.v.toFixed(2)}`;
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                type: 'category',
+                                ticks: {
+                                    autoSkip: false,
+                                    maxRotation: 90,
+                                    minRotation: 90
+                                }
+                            },
+                            y: {
+                                type: 'category'
+                            }
+                        }
+                    }
+                });
+            }
+            
+            // Scatter plot (first two numeric columns)
+            if (numericColumns.length >= 2) {
+                const scatterPlotsCtx = document.getElementById('scatterPlotsChart').getContext('2d');
+                charts.scatterPlotsChart = new Chart(scatterPlotsCtx, {
+                    type: 'scatter',
+                    data: {
+                        datasets: [{
+                            label: `${numericColumns[0]} vs ${numericColumns[1]}`,
+                            data: currentData.map(row => ({
+                                x: row[numericColumns[0]],
+                                y: row[numericColumns[1]]
+                            })),
+                            backgroundColor: 'rgba(79, 70, 229, 0.7)',
+                            borderColor: 'rgba(79, 70, 229, 1)',
+                            borderWidth: 1,
+                            pointRadius: 5
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: numericColumns[0]
+                                }
+                            },
+                            y: {
+                                title: {
+                                    display: true,
+                                    text: numericColumns[1]
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        function generateLLMInsights() {
+            // Simulate LLM analysis with a loading state
+            document.getElementById('llmInsightsContent').innerHTML = `
+                <div style="text-align: center; padding: 20px;">
+                    <div class="spinner" style="margin: 0 auto 20px;"></div>
+                    <p>Generating AI-powered insights from your data...</p>
+                </div>
+            `;
+            
+            // Simulate API call with timeout
+            setTimeout(() => {
+                // Generate mock insights based on the data
+                const numericColumns = currentColumns.filter(col => 
+                    determineColumnType(currentData[0][col]) === 'numeric'
+                );
+                
+                const categoricalColumns = currentColumns.filter(col => 
+                    determineColumnType(currentData[0][col]) === 'categorical'
+                );
+                
+                const dateColumns = currentColumns.filter(col => 
+                    determineColumnType(currentData[0][col]) === 'datetime'
+                );
+                
+                const insights = [];
+                
+                // General insights
+                insights.push({
+                    title: "Dataset Overview",
+                    content: `This dataset contains ${currentData.length} records with ${currentColumns.length} features. 
+                    There are ${numericColumns.length} numeric columns, ${categoricalColumns.length} categorical columns, 
+                    and ${dateColumns.length} date/time columns.`
+                });
+                
+                // Data quality insights
+                const missingValues = currentColumns.map(col => 
+                    currentData.filter(row => row[col] === null || row[col] === undefined || row[col] === '').length
+                );
+                const columnsWithMissing = missingValues.filter(count => count > 0).length;
+                
+                insights.push({
+                    title: "Data Quality Assessment",
+                    content: `${columnsWithMissing} columns contain missing values. 
+                    ${columnsWithMissing > 0 ? 'Consider imputation or removal of missing values.' : 'No missing values detected.'}`
+                });
+                
+                // Numeric insights
+                if (numericColumns.length > 0) {
+                    const firstNumericCol = numericColumns[0];
+                    const numericValues = currentData.map(row => row[firstNumericCol]).filter(v => v !== null && v !== undefined);
+                    const minVal = Math.min(...numericValues);
+                    const maxVal = Math.max(...numericValues);
+                    const meanVal = numericValues.reduce((sum, val) => sum + val, 0) / numericValues.length;
+                    
+                    insights.push({
+                        title: `Numeric Feature: ${firstNumericCol}`,
+                        content: `Values range from ${minVal.toFixed(2)} to ${maxVal.toFixed(2)} with a mean of ${meanVal.toFixed(2)}. 
+                        Consider checking for outliers and normalizing if the distribution is skewed.`
+                    });
+                }
+                
+                // Categorical insights
+                if (categoricalColumns.length > 0) {
+                    const firstCatCol = categoricalColumns[0];
+                    const uniqueValues = new Set(currentData.map(row => row[firstCatCol]));
+                    
+                    insights.push({
+                        title: `Categorical Feature: ${firstCatCol}`,
+                        content: `Contains ${uniqueValues.size} distinct values. 
+                        ${uniqueValues.size > 10 ? 'This high cardinality might require special encoding techniques.' : 
+                        'This can be effectively encoded using one-hot or label encoding.'}`
+                    });
+                }
+                
+                // Display the insights
+                document.getElementById('llmInsightsContent').innerHTML = insights.map(insight => `
+                    <div class="llm-insight">
+                        <div class="llm-insight-header">
+                            <i class="fas fa-lightbulb"></i>
+                            <div class="llm-insight-title">${insight.title}</div>
+                        </div>
+                        <div class="llm-insight-content">${insight.content}</div>
+                    </div>
+                `).join('');
+                
+                // Generate recommendations
+                const recommendations = [];
+                
+                if (columnsWithMissing > 0) {
+                    recommendations.push(
+                        "Consider using mean/median imputation for numeric columns with missing values",
+                        "For categorical columns, consider mode imputation or creating a 'missing' category",
+                        "Evaluate if rows with excessive missing values should be removed"
+                    );
+                }
+                
+                if (numericColumns.length > 0) {
+                    recommendations.push(
+                        "Check numeric columns for outliers using box plots or z-score analysis",
+                        "Consider normalizing or standardizing numeric features if they have different scales",
+                        "Evaluate if log transformations would help with skewed distributions"
+                    );
+                }
+                
+                if (categoricalColumns.length > 0) {
+                    recommendations.push(
+                        "For categorical features with many categories, consider grouping rare categories",
+                        "Evaluate if target encoding would be more effective than one-hot encoding for high-cardinality features",
+                        "Check for inconsistent capitalization or spelling variations in categorical values"
+                    );
+                }
+                
+                document.getElementById('dataRecommendations').innerHTML = recommendations.map(rec => `
+                    <div class="llm-insight">
+                        <div class="llm-insight-content">${rec}</div>
+                    </div>
+                `).join('');
+                
+                // Generate transformation suggestions
+                const transformations = [];
+                
+                transformations.push(
+                    "Consider creating interaction terms between important numeric features",
+                    "For datetime features, extract components like day of week, month, etc.",
+                    "Create aggregations or group-level statistics for related features"
+                );
+                
+                document.getElementById('transformationSuggestions').innerHTML = transformations.map(trans => `
+                    <div class="llm-insight">
+                        <div class="llm-insight-content">${trans}</div>
+                    </div>
+                `).join('');
+                
+            }, 2000);
+        }
+
+        // Helper functions
+        function determineColumnType(value) {
+            if (value === null || value === undefined) return 'unknown';
+            
+            // Check for numeric values
+            if (!isNaN(Number(value)) && value !== '' && value !== null) {
+                return 'numeric';
+            }
+            
+            // Check for date strings
+            if (typeof value === 'string' && !isNaN(Date.parse(value))) {
+                return 'datetime';
+            }
+            
+            // Check for boolean values
+            if (value === true || value === false || 
+                String(value).toLowerCase() === 'true' || 
+                String(value).toLowerCase() === 'false') {
+                return 'boolean';
+            }
+            
+            // Check for text with many unique values (likely free text)
+            if (typeof value === 'string' && value.length > 30) {
+                return 'text';
+            }
+            
+            // Check for categorical (limited unique values)
+            return 'categorical';
+        }
+
+        function percentile(arr, p) {
+            if (arr.length === 0) return 0;
+            arr.sort((a, b) => a - b);
+            const index = (p / 100) * (arr.length - 1);
+            const lower = Math.floor(index);
+            const upper = lower + 1;
+            const weight = index % 1;
+            
+            if (upper >= arr.length) return arr[lower];
+            return arr[lower] * (1 - weight) + arr[upper] * weight;
+        }
+    </script>
+</body>
+</html>

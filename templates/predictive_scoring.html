@@ -1,0 +1,1024 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GENFLOW - Predictive Scoring with ML Models</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --primary-dark: #4338ca;
+            --primary-light: #6366f1;
+            --secondary: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --info: #3b82f6;
+            --dark: #1e293b;
+            --light: #f8fafc;
+            --gray: #64748b;
+            --gray-light: #e2e8f0;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        }
+
+        body {
+            background-color: #f8fafc;
+            color: var(--dark);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            padding: 16px 20px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-title {
+            font-size: 24px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        .button {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            height: 36px;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 4px rgba(79, 70, 229, 0.2);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(79, 70, 229, 0.3);
+        }
+
+        .button-secondary {
+            background: white;
+            color: var(--primary);
+            border: 1px solid var(--gray-light);
+            box-shadow: none;
+        }
+
+        .button-secondary:hover {
+            background-color: #f1f5f9;
+        }
+
+        .panel {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            border: 1px solid var(--gray-light);
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+
+        .panel-header {
+            padding: 16px;
+            border-bottom: 1px solid var(--gray-light);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .panel-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .panel-body {
+            padding: 16px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .card {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            border: 1px solid var(--gray-light);
+            overflow: hidden;
+        }
+
+        .card-header {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--gray-light);
+            font-weight: 600;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .card-body {
+            padding: 16px;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+            width: 100%;
+        }
+
+        .table-container {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+
+        th {
+            background-color: #f8fafc;
+            padding: 10px;
+            text-align: left;
+            border: 1px solid var(--gray-light);
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        td {
+            padding: 10px;
+            border: 1px solid var(--gray-light);
+            color: var(--dark);
+        }
+
+        tr:nth-child(even) {
+            background-color: #f8fafc;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: var(--dark);
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid var(--gray-light);
+            border-radius: 6px;
+            font-size: 14px;
+            transition: all 0.2s ease;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.2);
+        }
+
+        .alert {
+            padding: 12px 16px;
+            border-radius: 6px;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .alert-info {
+            background-color: #e0f2fe;
+            color: #0369a1;
+            border: 1px solid #bae6fd;
+        }
+
+        .alert-success {
+            background-color: #dcfce7;
+            color: #166534;
+            border: 1px solid #bbf7d0;
+        }
+
+        .alert-warning {
+            background-color: #fef3c7;
+            color: #92400e;
+            border: 1px solid #fde68a;
+        }
+
+        .alert-danger {
+            background-color: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fecaca;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .badge-primary {
+            background-color: #e0e7ff;
+            color: #4f46e5;
+        }
+
+        .badge-success {
+            background-color: #d1fae5;
+            color: #065f46;
+        }
+
+        .badge-warning {
+            background-color: #fef3c7;
+            color: #92400e;
+        }
+
+        .badge-danger {
+            background-color: #fee2e2;
+            color: #991b1b;
+        }
+
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 40px;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-left-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .model-card {
+            border-left: 4px solid var(--primary);
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        .model-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .model-card.selected {
+            background-color: #e0e7ff;
+            border-left: 4px solid var(--primary-dark);
+        }
+
+        .feature-importance-chart {
+            height: 400px;
+        }
+
+        .score-distribution {
+            height: 300px;
+        }
+
+        .roc-curve {
+            height: 300px;
+        }
+
+        .confusion-matrix {
+            height: 300px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="header-title">
+                <i class="fas fa-robot"></i>
+                Predictive Scoring with Built-in ML Models
+            </div>
+            <div class="header-actions">
+                <button class="button button-secondary" id="backButton">
+                    <i class="fas fa-arrow-left"></i>
+                    Back to ETL
+                </button>
+                <button class="button" id="exportReport">
+                    <i class="fas fa-file-export"></i>
+                    Export Report
+                </button>
+            </div>
+        </div>
+
+        <div id="loadingSection" class="loading">
+            <div class="spinner"></div>
+        </div>
+
+        <div id="contentSection" style="display: none;">
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle"></i>
+                <div>
+                    <strong>Predictive Scoring Active</strong>
+                    <p>This interface provides automated machine learning capabilities powered by LLMs to generate predictive scores for your data.</p>
+                </div>
+            </div>
+
+            <div class="grid">
+                <div class="card">
+                    <div class="card-header">
+                        <i class="fas fa-database"></i>
+                        Dataset Overview
+                    </div>
+                    <div class="card-body">
+                        <div class="form-group">
+                            <label class="form-label">Selected Dataset</label>
+                            <input type="text" class="form-control" id="datasetName" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Rows × Columns</label>
+                            <input type="text" class="form-control" id="datasetShape" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Target Variable</label>
+                            <input type="text" class="form-control" id="targetVariable" readonly>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <i class="fas fa-chart-pie"></i>
+                        Problem Type
+                    </div>
+                    <div class="card-body">
+                        <div class="form-group">
+                            <label class="form-label">ML Task</label>
+                            <input type="text" class="form-control" id="mlTask" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Class Distribution</label>
+                            <div class="chart-container">
+                                <canvas id="classDistributionChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-title">
+                        <i class="fas fa-cogs"></i>
+                        Model Selection & Configuration
+                    </div>
+                </div>
+                <div class="panel-body">
+                    <div class="grid">
+                        <div class="card model-card" data-model="xgboost">
+                            <div class="card-header">
+                                <i class="fas fa-brain"></i>
+                                XGBoost
+                            </div>
+                            <div class="card-body">
+                                <p>Gradient boosted decision trees optimized for speed and performance.</p>
+                                <div style="display: flex; gap: 8px; margin-top: 12px;">
+                                    <span class="badge badge-primary">High Accuracy</span>
+                                    <span class="badge badge-warning">Feature Importance</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card model-card" data-model="random_forest">
+                            <div class="card-header">
+                                <i class="fas fa-tree"></i>
+                                Random Forest
+                            </div>
+                            <div class="card-body">
+                                <p>Ensemble of decision trees that reduces overfitting through bagging.</p>
+                                <div style="display: flex; gap: 8px; margin-top: 12px;">
+                                    <span class="badge badge-primary">Robust</span>
+                                    <span class="badge badge-warning">Feature Importance</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card model-card" data-model="logistic_regression">
+                            <div class="card-header">
+                                <i class="fas fa-project-diagram"></i>
+                                Logistic Regression
+                            </div>
+                            <div class="card-body">
+                                <p>Linear model for classification with probabilistic interpretation.</p>
+                                <div style="display: flex; gap: 8px; margin-top: 12px;">
+                                    <span class="badge badge-primary">Interpretable</span>
+                                    <span class="badge badge-success">Fast</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card model-card" data-model="neural_network">
+                            <div class="card-header">
+                                <i class="fas fa-network-wired"></i>
+                                Neural Network
+                            </div>
+                            <div class="card-body">
+                                <p>Deep learning model capable of learning complex patterns.</p>
+                                <div style="display: flex; gap: 8px; margin-top: 12px;">
+                                    <span class="badge badge-primary">High Capacity</span>
+                                    <span class="badge badge-danger">Slow</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <i class="fas fa-sliders-h"></i>
+                            Advanced Configuration
+                        </div>
+                        <div class="card-body">
+                            <div class="grid">
+                                <div class="form-group">
+                                    <label class="form-label">Train/Test Split</label>
+                                    <select class="form-control" id="trainTestSplit">
+                                        <option value="0.7">70% Train / 30% Test</option>
+                                        <option value="0.8" selected>80% Train / 20% Test</option>
+                                        <option value="0.9">90% Train / 10% Test</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Cross Validation</label>
+                                    <select class="form-control" id="crossValidation">
+                                        <option value="3">3-fold</option>
+                                        <option value="5" selected>5-fold</option>
+                                        <option value="10">10-fold</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Hyperparameter Tuning</label>
+                                    <select class="form-control" id="hyperparameterTuning">
+                                        <option value="none">None</option>
+                                        <option value="basic" selected>Basic</option>
+                                        <option value="advanced">Advanced</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Feature Selection</label>
+                                    <select class="form-control" id="featureSelection">
+                                        <option value="all">Use All Features</option>
+                                        <option value="auto" selected>Auto-select Important Features</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="text-align: center; margin-top: 20px;">
+                        <button class="button" id="runModel" style="padding: 12px 24px; font-size: 16px;">
+                            <i class="fas fa-play"></i>
+                            Train Predictive Model
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="resultsSection" style="display: none;">
+                <div class="panel">
+                    <div class="panel-header">
+                        <div class="panel-title">
+                            <i class="fas fa-chart-line"></i>
+                            Model Performance
+                        </div>
+                    </div>
+                    <div class="panel-body">
+                        <div class="grid">
+                            <div class="card">
+                                <div class="card-header">
+                                    <i class="fas fa-tachometer-alt"></i>
+                                    Key Metrics
+                                </div>
+                                <div class="card-body">
+                                    <div class="grid">
+                                        <div>
+                                            <label class="form-label">Accuracy</label>
+                                            <input type="text" class="form-control" id="accuracyScore" readonly>
+                                        </div>
+                                        <div>
+                                            <label class="form-label">Precision</label>
+                                            <input type="text" class="form-control" id="precisionScore" readonly>
+                                        </div>
+                                        <div>
+                                            <label class="form-label">Recall</label>
+                                            <input type="text" class="form-control" id="recallScore" readonly>
+                                        </div>
+                                        <div>
+                                            <label class="form-label">F1 Score</label>
+                                            <input type="text" class="form-control" id="f1Score" readonly>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="card">
+                                <div class="card-header">
+                                    <i class="fas fa-project-diagram"></i>
+                                    ROC Curve
+                                </div>
+                                <div class="card-body">
+                                    <div class="chart-container roc-curve">
+                                        <canvas id="rocCurveChart"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="grid">
+                            <div class="card">
+                                <div class="card-header">
+                                    <i class="fas fa-chart-bar"></i>
+                                    Feature Importance
+                                </div>
+                                <div class="card-body">
+                                    <div class="chart-container feature-importance-chart">
+                                        <canvas id="featureImportanceChart"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="card">
+                                <div class="card-header">
+                                    <i class="fas fa-table"></i>
+                                    Confusion Matrix
+                                </div>
+                                <div class="card-body">
+                                    <div class="chart-container confusion-matrix">
+                                        <canvas id="confusionMatrixChart"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <div class="panel-header">
+                        <div class="panel-title">
+                            <i class="fas fa-table"></i>
+                            Scored Data Preview
+                        </div>
+                    </div>
+                    <div class="panel-body">
+                        <div class="table-container">
+                            <table id="scoredDataTable">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Actual</th>
+                                        <th>Predicted</th>
+                                        <th>Probability</th>
+                                        <th>Score</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Will be populated by JavaScript -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <div class="panel-header">
+                        <div class="panel-title">
+                            <i class="fas fa-lightbulb"></i>
+                            LLM-Generated Insights
+                        </div>
+                    </div>
+                    <div class="panel-body">
+                        <div id="llmInsights">
+                            <div class="loading">
+                                <div class="spinner"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Get dataset info from session storage
+            const datasetInfo = JSON.parse(sessionStorage.getItem('predictiveScoringData') || {};
+            
+            // Initialize UI
+            initializeUI(datasetInfo);
+            
+            // Set up event listeners
+            setupEventListeners();
+        });
+
+        function initializeUI(datasetInfo) {
+            // Show loading spinner while initializing
+            document.getElementById('loadingSection').style.display = 'flex';
+            document.getElementById('contentSection').style.display = 'none';
+            
+            // Simulate loading time (in real app, this would be API calls)
+            setTimeout(() => {
+                // Populate dataset info
+                document.getElementById('datasetName').value = datasetInfo.filename || 'current_dataset.csv';
+                document.getElementById('datasetShape').value = datasetInfo.shape || '1000 rows × 15 columns';
+                document.getElementById('targetVariable').value = datasetInfo.target || 'target_column';
+                document.getElementById('mlTask').value = datasetInfo.problemType || 'Binary Classification';
+                
+                // Initialize charts
+                initializeCharts(datasetInfo);
+                
+                // Hide loading and show content
+                document.getElementById('loadingSection').style.display = 'none';
+                document.getElementById('contentSection').style.display = 'block';
+            }, 1500);
+        }
+
+        function initializeCharts(datasetInfo) {
+            // Class Distribution Chart
+            const classCtx = document.getElementById('classDistributionChart').getContext('2d');
+            new Chart(classCtx, {
+                type: 'pie',
+                data: {
+                    labels: ['Class 0', 'Class 1'],
+                    datasets: [{
+                        data: [65, 35],
+                        backgroundColor: ['#4f46e5', '#e0e7ff'],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        },
+                        title: {
+                            display: true,
+                            text: 'Target Class Distribution'
+                        }
+                    }
+                }
+            });
+        }
+
+        function setupEventListeners() {
+            // Model selection
+            const modelCards = document.querySelectorAll('.model-card');
+            modelCards.forEach(card => {
+                card.addEventListener('click', function() {
+                    modelCards.forEach(c => c.classList.remove('selected'));
+                    this.classList.add('selected');
+                });
+            });
+
+            // Back button
+            document.getElementById('backButton').addEventListener('click', function() {
+                window.close();
+            });
+
+            // Export report
+            document.getElementById('exportReport').addEventListener('click', function() {
+                alert('Exporting predictive scoring report...');
+                // In a real app, this would generate a PDF/CSV report
+            });
+
+            // Run model button
+            document.getElementById('runModel').addEventListener('click', function() {
+                runPredictiveModel();
+            });
+        }
+
+        function runPredictiveModel() {
+            const selectedModel = document.querySelector('.model-card.selected')?.dataset.model;
+            if (!selectedModel) {
+                alert('Please select a model first');
+                return;
+            }
+
+            // Show loading state
+            const runButton = document.getElementById('runModel');
+            runButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Training Model...';
+            runButton.disabled = true;
+
+            // Get configuration
+            const config = {
+                model: selectedModel,
+                trainTestSplit: document.getElementById('trainTestSplit').value,
+                crossValidation: document.getElementById('crossValidation').value,
+                hyperparameterTuning: document.getElementById('hyperparameterTuning').value,
+                featureSelection: document.getElementById('featureSelection').value
+            };
+
+            // Simulate API call to train model
+            setTimeout(() => {
+                // Show results
+                showModelResults();
+                
+                // Reset button
+                runButton.innerHTML = '<i class="fas fa-play"></i> Train Predictive Model';
+                runButton.disabled = false;
+            }, 3000);
+        }
+
+        function showModelResults() {
+            // Show results section
+            document.getElementById('resultsSection').style.display = 'block';
+            
+            // Scroll to results
+            document.getElementById('resultsSection').scrollIntoView({ behavior: 'smooth' });
+
+            // Populate metrics
+            document.getElementById('accuracyScore').value = '0.92 (92%)';
+            document.getElementById('precisionScore').value = '0.89';
+            document.getElementById('recallScore').value = '0.94';
+            document.getElementById('f1Score').value = '0.91';
+
+            // Create charts
+            createPerformanceCharts();
+            
+            // Generate LLM insights
+            generateLLMInsights();
+        }
+
+        function createPerformanceCharts() {
+            // Feature Importance Chart
+            const featureCtx = document.getElementById('featureImportanceChart').getContext('2d');
+            new Chart(featureCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Feature 1', 'Feature 2', 'Feature 3', 'Feature 4', 'Feature 5'],
+                    datasets: [{
+                        label: 'Importance Score',
+                        data: [0.25, 0.18, 0.15, 0.12, 0.10],
+                        backgroundColor: '#4f46e5'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    indexAxis: 'y',
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Top 5 Most Important Features'
+                        },
+                        legend: {
+                            display: false
+                        }
+                    }
+                }
+            });
+
+            // ROC Curve Chart
+            const rocCtx = document.getElementById('rocCurveChart').getContext('2d');
+            new Chart(rocCtx, {
+                type: 'line',
+                data: {
+                    labels: ['0.0', '0.2', '0.4', '0.6', '0.8', '1.0'],
+                    datasets: [{
+                        label: 'ROC Curve (AUC = 0.96)',
+                        data: [0, 0.8, 0.9, 0.94, 0.98, 1.0],
+                        borderColor: '#4f46e5',
+                        backgroundColor: 'rgba(79, 70, 229, 0.1)',
+                        fill: true,
+                        tension: 0.4
+                    }, {
+                        label: 'Random',
+                        data: [0, 0.2, 0.4, 0.6, 0.8, 1.0],
+                        borderColor: '#64748b',
+                        borderDash: [5, 5],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'ROC Curve'
+                        }
+                    },
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'False Positive Rate'
+                            }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'True Positive Rate'
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Confusion Matrix Chart
+            const confusionCtx = document.getElementById('confusionMatrixChart').getContext('2d');
+            new Chart(confusionCtx, {
+                type: 'matrix',
+                data: {
+                    datasets: [{
+                        label: 'Confusion Matrix',
+                        data: [
+                            {x: 'Actual Negative', y: 'Predicted Negative', v: 120},
+                            {x: 'Actual Negative', y: 'Predicted Positive', v: 15},
+                            {x: 'Actual Positive', y: 'Predicted Negative', v: 8},
+                            {x: 'Actual Positive', y: 'Predicted Positive', v: 85}
+                        ],
+                        backgroundColor: function(context) {
+                            const value = context.dataset.data[context.dataIndex].v;
+                            const max = Math.max(...context.dataset.data.map(d => d.v));
+                            const alpha = value / max;
+                            return `rgba(79, 70, 229, ${alpha})`;
+                        },
+                        borderColor: 'white',
+                        borderWidth: 2,
+                        width: ({chart}) => (chart.chartArea.width / 2) - 1,
+                        height: ({chart}) => (chart.chartArea.height / 2) - 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Confusion Matrix'
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `${context.dataset.data[context.dataIndex].x} / ${context.dataset.data[context.dataIndex].y}: ${context.dataset.data[context.dataIndex].v}`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            type: 'category',
+                            labels: ['Actual Negative', 'Actual Positive'],
+                            offset: true,
+                            grid: {
+                                display: false
+                            },
+                            title: {
+                                display: true,
+                                text: 'Actual'
+                            }
+                        },
+                        y: {
+                            type: 'category',
+                            labels: ['Predicted Positive', 'Predicted Negative'],
+                            offset: true,
+                            grid: {
+                                display: false
+                            },
+                            title: {
+                                display: true,
+                                text: 'Predicted'
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Populate scored data table
+            const tableBody = document.querySelector('#scoredDataTable tbody');
+            for (let i = 1; i <= 10; i++) {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${1000 + i}</td>
+                    <td>${i % 3 === 0 ? 'Positive' : 'Negative'}</td>
+                    <td>${i % 4 === 0 ? 'Positive' : 'Negative'}</td>
+                    <td>${(0.8 + Math.random() * 0.19).toFixed(2)}</td>
+                    <td>${Math.floor(500 + Math.random() * 500)}</td>
+                `;
+                tableBody.appendChild(row);
+            }
+        }
+
+        function generateLLMInsights() {
+            const insightsContainer = document.getElementById('llmInsights');
+            
+            // Simulate LLM API call
+            setTimeout(() => {
+                insightsContainer.innerHTML = `
+                    <div class="card">
+                        <div class="card-header">
+                            <i class="fas fa-chart-line"></i>
+                            Key Findings
+                        </div>
+                        <div class="card-body">
+                            <ul style="margin-bottom: 16px;">
+                                <li>The model shows strong predictive power with an AUC of 0.96, indicating excellent discrimination between classes.</li>
+                                <li>Feature importance analysis reveals that "Feature 1" is the most significant predictor, accounting for 25% of the model's decision-making.</li>
+                                <li>The recall score of 0.94 suggests the model is particularly good at identifying positive cases, which may be important for your use case.</li>
+                                <li>There's a slight class imbalance (65%/35%) that could potentially be addressed with sampling techniques for even better performance.</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="card" style="margin-top: 16px;">
+                        <div class="card-header">
+                            <i class="fas fa-lightbulb"></i>
+                            Recommendations
+                        </div>
+                        <div class="card-body">
+                            <ul>
+                                <li>Consider collecting more data on "Feature 3" as it shows high predictive value but has some missing values.</li>
+                                <li>Experiment with different threshold values to optimize for precision or recall based on your business needs.</li>
+                                <li>The model occasionally confuses similar cases - adding more contextual features might help reduce this.</li>
+                                <li>For production deployment, monitor performance drift over time as data distributions change.</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="card" style="margin-top: 16px;">
+                        <div class="card-header">
+                            <i class="fas fa-code"></i>
+                            Deployment Snippet
+                        </div>
+                        <div class="card-body">
+                            <pre style="background: #f8fafc; padding: 12px; border-radius: 6px; overflow-x: auto;">
+<code># Sample Python code to deploy this model
+import pickle
+import pandas as pd
+
+# Load the trained model
+model = pickle.load(open('predictive_model.pkl', 'rb'))
+
+# Prepare new data (same features as training)
+new_data = pd.DataFrame([{
+    'feature1': 0.5,
+    'feature2': 1.2,
+    'feature3': -0.3,
+    # ... other features
+}])
+
+# Make predictions
+predictions = model.predict(new_data)
+probabilities = model.predict_proba(new_data)
+
+print(f"Predicted class: {predictions[0]}")
+print(f"Probability: {probabilities[0][1]:.2f}")</code>
+                            </pre>
+                        </div>
+                    </div>
+                `;
+            }, 2000);
+        }
+    </script>
+</body>
+</html>
